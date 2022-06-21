@@ -1,6 +1,6 @@
-**Package Enhancement Plan**
+# Package Enhancement Plan
 
-**Title**: COMPASS PEP: Level 1
+**Title**: COMPASS Package Enhancement Plan: **Level 1**
 
 **CRU/Department/Division/Center**: CHSI
 
@@ -97,15 +97,17 @@ COMPASS is a statistical framework that enables unbiased analysis of antigen-spe
 Make an RStudio container to run FlowKit and UMAP via 'reticulate' and COMPASS.
 
 **Python Tools:**
-    [ ] FlowKit
-    [ ] Scanpy
-    [ ] UMAP
+
+- [ ] FlowKit
+- [ ] Scanpy
+- [ ] UMAP
 
 **R Tools:**
-    [ ] Quarto
-    [ ] COMPASS
-    [ ] reticulate
-    [ ] tidyverse
+
+- [ ] Quarto
+- [ ] COMPASS
+- [ ] reticulate
+- [ ] tidyverse
 
 ## Aim 2: Acquire Publicly Available/Shareable Flow Cytometry Dataset
 
