@@ -16,7 +16,7 @@
 
 **Original Creation Date**: 6/21/22
 
-**Code Repo URL**: https://gitlab.oit.duke.edu/chsi-informatics/projects/compass-pep-level-1
+**Code Repo URL**: https://gitlab.oit.duke.edu/chsi-informatics/projects/compass-flowkit-vignette
 
 **Data Location**: ?
 
@@ -150,11 +150,11 @@ Make an RStudio container to run FlowKit and UMAP via 'reticulate' and COMPASS.
 
 ## Aim 5: Publish Tutorial Code
 
-**Host repo for tutorial on GitHub**
+Mirror GitLab repo on GitHub [instructions](https://docs.gitlab.com/ee/user/project/repository/mirror/push.html#set-up-a-push-mirror-from-gitlab-to-github)
 
 1. Show a rendered HTML with code and results
-2. Link to repo from FlowKit tutorials
-3. Post final files on Zenodo
+2. Link to GitHub repo in FlowKit tutorials
+3. Post final files on Zenodo?
     - Include copy of data files?
     - Publish Qmd document or just link to GitLab repo with rendered Qmd
 
