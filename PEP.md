@@ -96,9 +96,10 @@ COMPASS is a statistical framework that enables unbiased analysis of antigen-spe
 
 Make an RStudio container to run FlowKit and UMAP via 'reticulate' and COMPASS.
 
+
 **Python Tools:**
 
-- [ ] FlowKit
+- [ ] FlowKit 0.9.1
 - [ ] Scanpy
 - [ ] UMAP
 
@@ -111,10 +112,13 @@ Make an RStudio container to run FlowKit and UMAP via 'reticulate' and COMPASS.
 
 ## Aim 2: Acquire Publicly Available/Shareable Flow Cytometry Dataset
 
-- Scott mentioned there are several commonly-used datasets online
-- Dataset included in FlowKit?
-- Reeves data?
-- Other?
+- 8-color dataset in FlowKit data directory
+   + Same files as used in the tutorials
+   + Need to download by hand from dev repo
+   + Try to wget from repo during container build
+   + Need stimulated and unstimulated
+    - Stim: CMV (E03)
+    - Unstim: unstim (E01)
 
 ## Aim 3: Process Raw Data in FlowKit
 
@@ -125,13 +129,16 @@ Make an RStudio container to run FlowKit and UMAP via 'reticulate' and COMPASS.
     3. Compensation
 3. Create boolean vectors for all mutually exclusive subsets defined by manual gating
 4. Extract events corresponding to each unique subset
-5. Exploratory cluster visualization using UMAP with subsets labeled
-6. Export events to suitable data object for import to R
+5. Calculate counts for each subset
+6. Export counts to suitable data object for import to R
 
 ## Aim 4: Run COMPASS
 
+
 - [COMPASS Vignette](https://www.bioconductor.org/packages/devel/bioc/vignettes/COMPASS/inst/doc/COMPASS.html)
 - [SimpleCOMPASS Vignette](https://www.bioconductor.org/packages/devel/bioc/vignettes/COMPASS/inst/doc/SimpleCOMPASS.pdf)
+
+- Meet with Frances to get help with this
 
 1. Import data object containing all mutually exclusive subsets
 2. Create cell counts dataset
@@ -143,11 +150,13 @@ Make an RStudio container to run FlowKit and UMAP via 'reticulate' and COMPASS.
 
 ## Aim 5: Publish Tutorial Code
 
-1. Share GitLab repo via Zenodo
+**Host repo for tutorial on GitHub**
 
-- Include copy of data files?
-- Publish Qmd document or just link to GitLab repo with rendered Qmd
-
+1. Show a rendered HTML with code and results
+2. Link to repo from FlowKit tutorials
+3. Post final files on Zenodo
+    - Include copy of data files?
+    - Publish Qmd document or just link to GitLab repo with rendered Qmd
 
 # Appendix
 
