@@ -1,0 +1,59 @@
+---
+title: "FlowKit COMPASS Vignette"
+author: Tyler Schappe
+format: 
+  html:
+    toc: true
+    toc_float: true
+    df-print: paged
+jupyter: python3
+---
+
+## Processing Raw Flow Cytometry Data Using FlowKit
+
+### FlowKit Setup
+
+```{python}
+import os
+import flowkit as fk
+import numpy as np
+import pandas as pd
+import anndata as ad
+
+# Check version so users can verify they have the same version/API
+fk.__version__
+```
+
+
+```{python}
+data_dir = "/opt/flowkit/examples/data/8_color_data_set"
+sample_path = os.path.join(data_dir, "fcs_files")
+wsp_path = os.path.join(data_dir, "8_color_ICS.wsp")
+```
+
+### Load Raw Flow Cytometry Data
+
+We create a FlowKit session using the FCS files. We also import a corresponding FlowJo workspace (.wsp) file that contains any compensations, transformations, and manual gating done in FlowJo.
+
+```{python}
+# Create a Session with the path to our FCS files. 
+session = fk.Session(sample_path)
+
+# Import a FlowJo 10 workspace file
+session.import_flowjo_workspace(wsp_path)
+```
+
+#### Examine Dataset Summary
+
+```{python}
+session.summary()
+```
+
+#### Choose the Sample Group
+
+From the summary, we can see all of the samples that have manual gating are in the 'DEN' sample group, so we infer this is the group of interest.
+
+```{python}
+sample_group = 'DEN'
+```
+
