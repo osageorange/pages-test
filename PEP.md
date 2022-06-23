@@ -57,58 +57,59 @@ COMPASS is a statistical framework that enables unbiased analysis of antigen-spe
 
 # Proposed Project Aims and Timelines 
 
-1. [ ] Aim 1: Create Singularity Container for OOD
-    - ??/??
+1. [ ] Aim 1: Adapt COMPASS FlowKit Container
+    - 6/24/22
 
 1. [ ] Aim 2: Acquire Publicly Available/Shareable Flow Cytometry Dataset
-    - ??/??
+    - 6/29/22
 
 2. [ ] Aim 3: Process Raw Data in FlowKit
-    - ??/??
+    - 7/6/22
 
 3. [ ] Aim 4: Run COMPASS
-    - ??/??
+    - 8/5/22
 
 4. [ ] Aim 5: Publish Tutorial Code
-    - ??/??
+    - 8/12/22
  
 
 # Example Dataset Description
 
 **Study design**: 
 
-**Sequencing Method**: NovaSeq 51-bp PE
+**Contact information for team member responsible for data collection/acquisition**: Scott White (scott.white@duke.edu)
 
-**Contact information for team member responsible for data collection/acquisition**: 
+**Date or version (if downloaded, provide date)**: NA
 
-**Date or version (if downloaded, provide date)**: 
+**Data transfer method and date**: NA
 
-**Data transfer method and date**: 
+**Where dataset is stored**: FlowKit Python library (https://github.com/whitews/FlowKit)
 
-**Where dataset is stored**: 
+**Notes:** Paired unstimulated and CMV-stimulated samples. 
 
-**Notes:**
+| Treatment   | Description                                | Variables and Source | Specifications|
+|-------------|--------------------------------------------|----------------------|---------------|
+|Unstimulated |Unstimulated controls                       |E01 file label        |               |
+|CMV          |Cells stimulated with cytomegalovirus       |E03 file label        |               |
 
 
 # Package Enhancement Plan
 
-## Aim 1: Create Singularity Container for OOD
+## Aim 1: Adapt COMPASS FlowKit Container
 
-Make an RStudio container to run FlowKit and UMAP via 'reticulate' and COMPASS.
-
+Adapt Scott White's COMPASS FlowKit container with following tools:
 
 **Python Tools:**
 
-- [ ] FlowKit 0.9.1
-- [ ] Scanpy
-- [ ] UMAP
+- [X] FlowKit 0.9.1
+- [X] Scanpy
+- [X] UMAP
 
 **R Tools:**
 
-- [ ] Quarto
-- [ ] COMPASS
-- [ ] reticulate
-- [ ] tidyverse
+- [X] Quarto
+- [X] COMPASS
+- [X] tidyverse
 
 ## Aim 2: Acquire Publicly Available/Shareable Flow Cytometry Dataset
 
