@@ -57,10 +57,10 @@ COMPASS is a statistical framework that enables unbiased analysis of antigen-spe
 
 # Proposed Project Aims and Timelines 
 
-1. [ ] Aim 1: Adapt COMPASS FlowKit Container
+1. [X] Aim 1: Adapt COMPASS FlowKit Container
     - 6/24/22
 
-1. [ ] Aim 2: Acquire Publicly Available/Shareable Flow Cytometry Dataset
+1. [X] Aim 2: Acquire Publicly Available/Shareable Flow Cytometry Dataset
     - 6/29/22
 
 2. [ ] Aim 3: Process Raw Data in FlowKit
@@ -123,15 +123,15 @@ Adapt Scott White's COMPASS FlowKit container with following tools:
 
 ## Aim 3: Process Raw Data in FlowKit
 
-1. Import and process raw FCS files using FlowKit
-2. QC checks
+1. [ ] Import and process raw FCS files using FlowKit
+2. [ ] QC checks
     1. Identical channel names
     2. Transformations
     3. Compensation
-3. Create boolean vectors for all mutually exclusive subsets defined by manual gating
-4. Extract events corresponding to each unique subset
-5. Calculate counts for each subset
-6. Export counts to suitable data object for import to R
+3. [ ] Create boolean vectors for all mutually exclusive subsets defined by manual gating
+4. [ ] Extract events corresponding to each unique subset
+5. [ ] Calculate counts for each subset
+6. [ ] Export counts to suitable data object for import to R
 
 ## Aim 4: Run COMPASS
 
@@ -141,13 +141,13 @@ Adapt Scott White's COMPASS FlowKit container with following tools:
 
 - Meet with Frances to get help with this
 
-1. Import data object containing all mutually exclusive subsets
-2. Create cell counts dataset
-3. Create metadata object
-4. Create COMPASS object
-5. Exploratory figures
-6. Run COMPASS model
-7. Generate heatmap
+1. [ ] Import data object containing all mutually exclusive subsets
+2. [ ] Create cell counts dataset
+3. [ ] Create metadata object
+4. [ ] Create COMPASS object
+5. [ ] Exploratory figures
+6. [ ] Run COMPASS model
+7. [ ] Generate heatmap
 
 ## Aim 5: Publish Tutorial Code
 
