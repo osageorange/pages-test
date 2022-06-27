@@ -57,3 +57,181 @@ From the summary, we can see all of the samples that have manual gating are in t
 sample_group = 'DEN'
 ```
 
+### Check Transformations
+
+Channel transformations can be applied in FlowJo in a number of ways. Particularly, if different transformations have been applied to different channels, we want to be careful about comparing among channels.In general, we would like the following transformations:
+
+- For color gates, the same logicle transform applied to all
+- For forward- and side-scatter gates, the same linear transform applied to all
+- We don't really care about the time channel since we will be excluding it later. 
+
+The results here include any transformations that were applied to any channel in FlowJo from the FCS in the workspace in that sample group.
+
+```{python}
+session.get_group_transforms(group_name=sample_group)
+```
+
+The transforms here all look consistent across samples.
+ 
+#### Get the Sample IDs for the Sample Group of Interest
+
+```{python}
+sample_list = session.get_group_sample_ids(sample_group)
+
+sample_list
+```
+
+### Choose a Gate of Interest
+
+####  Investigate the Gating Hierarchy
+
+```{python}
+print(session.get_gate_hierarchy(sample_group))
+```
+
+####  Examine All Gates for the Sample Group
+
+Note a gate ID is a combination of the gate name plus its gate path
+
+```{python}
+session.get_gate_ids(group_name=sample_group)
+```
+
+####  Define the Target Parent Gate
+
+```{python}
+target_gate = 'CD4+'
+target_gate_path = ('root', 'Time', 'Singlets', 'aAmine-', 'CD3+')
+```
+
+###  Process the Samples
+
+```{python}
+session.analyze_samples(sample_group, verbose= False)
+```
+
+### Choose a Sample
+
+```{python}
+sample_id = '101_DEN084Y5_15_E05_010_clean.fcs'
+sample = session.get_sample(sample_id)
+
+channel_lut = dict(zip(sample.pnn_labels, sample.pns_labels))
+```
+
+```{python}
+gate_ids = session.get_child_gate_ids(sample_group, target_gate)
+
+# we'll grab the gate path off one of the above gate IDs
+# (they all have the same parent)
+cd4_gate_path = gate_ids[0][1]
+```
+
+```{python}
+gate_ids
+```
+
+
+Loop over each gate and look for matches
+```{python}
+quadrant_gates = {}
+
+for (gate_name, gate_path) in gate_ids:
+    quadrant_gates[gate_name] = session.get_gate(sample_group, gate_name, gate_path)
+
+```
+
+```{python}
+gate_dims = []
+
+for gate_name, gate in quadrant_gates.items():
+    for dim in gate.dimensions:
+
+        #  need the PnN names for creating dimensions &
+        # collect metadata for each dimension
+        gate_dim_dict = {
+            'gate_name': gate_name,
+            'pnn_label': dim.id,
+            'pns_label': channel_lut[dim.id],
+            'min': dim.min,
+            'max': dim.max,
+            'comp_ref': dim.compensation_ref,
+            'xform_ref': dim.transformation_ref
+        }
+
+        gate_dims.append(gate_dim_dict)
+
+df_gate_dims = pd.DataFrame(gate_dims)
+```
+
+```{python}
+ # verify there's only one compensation referenced
+comp_refs = df_gate_dims['comp_ref'].unique()
+if len(comp_refs) > 1:
+    raise ValueError("More than one compensation ref found!")
+
+comp_ref = comp_refs[0]
+```
+
+```{python}
+# Now calculate the mean from each quadrant dimension
+# and make a pair of single dimension gates per channel (pos and neg)
+range_pnn_labels = df_gate_dims.pnn_label.unique()
+
+# this will hold the list of gate pairs (neg & pos) for each channel
+gate_pairs = []
+
+for label in range_pnn_labels:
+    # get rows for this label
+    df_label = df_gate_dims[df_gate_dims.pnn_label == label]
+
+    # collect all values (both min AND max)
+    all_values = []
+    all_values.extend(df_label[df_label['min'].notna()]['min'])
+    all_values.extend(df_label[df_label['max'].notna()]['max'])
+
+    mean_value = np.mean(all_values)
+
+    # gate name will be the first part of the PnS name
+    # i.e. the marker w/o the fluoro
+    pns_label = channel_lut[label]
+    marker_label = pns_label.split()[0]
+
+    # will have 2 gates per dimension (pos and neg):
+    # negative will be a range gate where max is specified but not min
+    # positive will be a range gate where min is specified but not max
+    gate_label_neg = marker_label + '-'
+    gate_label_pos = marker_label + '+'
+    gate_pairs.append([gate_label_pos, gate_label_neg])
+
+    # by convention the xform ref in FlowJo is tied to the channel PnN name
+    dim_neg = fk.Dimension(
+        label,
+        compensation_ref=comp_ref,
+        transformation_ref=label,
+        range_min=None,
+        range_max=mean_value
+    )
+    dim_pos = fk.Dimension(
+        label,
+        compensation_ref=comp_ref,
+        transformation_ref=label,
+        range_min=mean_value,
+        range_max=None
+    )
+
+    gate_neg = fk.gates.RectangleGate(
+        gate_label_neg,
+        cd4_gate_name,
+        dimensions=[dim_neg]
+    )
+    gate_pos = fk.gates.RectangleGate(
+        gate_label_pos,
+        cd4_gate_name,
+        dimensions=[dim_pos]
+    )
+
+    session.add_gate(gate_neg, group_name=sample_group)
+    session.add_gate(gate_pos, group_name=sample_group)
+```
+

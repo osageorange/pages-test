@@ -111,6 +111,8 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
   <ul class="collapse">
   <li><a href="#flowkit-setup" id="toc-flowkit-setup" class="nav-link" data-scroll-target="#flowkit-setup">FlowKit Setup</a></li>
   <li><a href="#load-raw-flow-cytometry-data" id="toc-load-raw-flow-cytometry-data" class="nav-link" data-scroll-target="#load-raw-flow-cytometry-data">Load Raw Flow Cytometry Data</a></li>
+  <li><a href="#check-transformations" id="toc-check-transformations" class="nav-link" data-scroll-target="#check-transformations">Check Transformations</a></li>
+  <li><a href="#choose-a-gate-of-interest" id="toc-choose-a-gate-of-interest" class="nav-link" data-scroll-target="#choose-a-gate-of-interest">Choose a Gate of Interest</a></li>
   </ul></li>
   </ul>
 </nav>
@@ -225,6 +227,84 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <h4 class="anchored" data-anchor-id="choose-the-sample-group">Choose the Sample Group</h4>
 <p>From the summary, we can see all of the samples that have manual gating are in the ‘DEN’ sample group, so we infer this is the group of interest.</p>
 <div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>sample_group <span class="op">=</span> <span class="st">'DEN'</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+</section>
+<section id="check-transformations" class="level3">
+<h3 class="anchored" data-anchor-id="check-transformations">Check Transformations</h3>
+<p>Channel transformations can be applied in FlowJo in a number of ways. Particularly, if different transformations have been applied to different channels, we want to be careful about comparing among channels.In general, we would like the following transformations:</p>
+<ul>
+<li>For color gates, the same logicle transform applied to all</li>
+<li>For forward- and side-scatter gates, the same linear transform applied to all</li>
+<li>We don’t really care about the time channel since we will be excluding it later.</li>
+</ul>
+<p>The results here include any transformations that were applied to any channel in FlowJo from the FCS in the workspace in that sample group.</p>
+<div class="cell" data-execution_count="6">
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>session.get_group_transforms(group_name<span class="op">=</span>sample_group)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="6">
+<pre><code>[LinearTransform(FSC-A, t: 262144.0, a: 0.0),
+ LinearTransform(FSC-H, t: 262144.0, a: 0.0),
+ LinearTransform(FSC-W, t: 262144.0, a: 0.0),
+ LinearTransform(SSC-A, t: 262144.0, a: 0.0),
+ LinearTransform(SSC-H, t: 262144.0, a: 0.0),
+ LinearTransform(SSC-W, t: 262144.0, a: 0.0),
+ LogicleTransform(TNFa FITC FLR-A, t: 262144.0, w: 1.0, m: 4.418539922, a: 0.0),
+ LogicleTransform(CD8 PerCP-Cy55 FLR-A, t: 262144.0, w: 1.0, m: 4.418539922, a: 0.0),
+ LogicleTransform(IL2 BV421 FLR-A, t: 262144.0, w: 1.0, m: 4.418539922, a: 0.0),
+ LogicleTransform(Aqua Amine FLR-A, t: 262144.0, w: 1.0, m: 4.418539922, a: 0.0),
+ LogicleTransform(IFNg APC FLR-A, t: 262144.0, w: 1.0, m: 4.418539922, a: 0.0),
+ LogicleTransform(CD3 APC-H7 FLR-A, t: 262144.0, w: 1.0, m: 4.418539922, a: 0.0),
+ LogicleTransform(CD107a PE FLR-A, t: 262144.0, w: 1.0, m: 4.418539922, a: 0.0),
+ LogicleTransform(CD4 PE-Cy7 FLR-A, t: 262144.0, w: 1.0, m: 4.418539922, a: 0.0),
+ LinearTransform(Time, t: 72.0, a: 0.8511997311),
+ LogicleTransform(Comp-TNFa FITC FLR-A, t: 262144.0, w: 1.0, m: 4.418539922, a: 0.0),
+ LogicleTransform(Comp-CD8 PerCP-Cy55 FLR-A, t: 262144.0, w: 1.0, m: 4.418539922, a: 0.0),
+ LogicleTransform(Comp-IL2 BV421 FLR-A, t: 262144.0, w: 1.0, m: 4.418539922, a: 0.0),
+ LogicleTransform(Comp-Aqua Amine FLR-A, t: 262144.0, w: 1.0, m: 4.418539922, a: 0.0),
+ LogicleTransform(Comp-IFNg APC FLR-A, t: 262144.0, w: 1.0, m: 4.418539922, a: 0.0),
+ LogicleTransform(Comp-CD3 APC-H7 FLR-A, t: 262144.0, w: 1.0, m: 4.418539922, a: 0.0),
+ LogicleTransform(Comp-CD107a PE FLR-A, t: 262144.0, w: 1.0, m: 4.418539922, a: 0.0),
+ LogicleTransform(Comp-CD4 PE-Cy7 FLR-A, t: 262144.0, w: 1.0, m: 4.418539922, a: 0.0)]</code></pre>
+</div>
+</div>
+<p>The transforms here all look consistent across samples.</p>
+<section id="get-the-sample-ids-for-the-sample-group-of-interest" class="level4">
+<h4 class="anchored" data-anchor-id="get-the-sample-ids-for-the-sample-group-of-interest">Get the Sample IDs for the Sample Group of Interest</h4>
+<div class="cell" data-execution_count="7">
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>sample_list <span class="op">=</span> session.get_group_sample_ids(sample_group)</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>sample_list</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="7">
+<pre><code>['101_DEN084Y5_15_E05_010_clean.fcs',
+ '101_DEN084Y5_15_E03_009_clean.fcs',
+ '101_DEN084Y5_15_E01_008_clean.fcs']</code></pre>
+</div>
+</div>
+</section>
+</section>
+<section id="choose-a-gate-of-interest" class="level3">
+<h3 class="anchored" data-anchor-id="choose-a-gate-of-interest">Choose a Gate of Interest</h3>
+<section id="investigate-the-gating-hierarchy" class="level4">
+<h4 class="anchored" data-anchor-id="investigate-the-gating-hierarchy">Investigate the Gating Hierarchy</h4>
+<div class="cell" data-execution_count="8">
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(session.get_gate_hierarchy(sample_group))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>root
+╰── Time
+    ╰── Singlets
+        ╰── aAmine-
+            ╰── CD3+
+                ├── CD4+
+                │   ├── CD107a+
+                │   ├── IFNg+
+                │   ├── IL2+
+                │   ╰── TNFa+
+                ╰── CD8+
+                    ├── CD107a+
+                    ├── IFNg+
+                    ├── IL2+
+                    ╰── TNFa+</code></pre>
+</div>
+</div>
 </section>
 </section>
 </section>
