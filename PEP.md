@@ -64,13 +64,13 @@ COMPASS is a statistical framework that enables unbiased analysis of antigen-spe
     - 6/29/22
 
 2. [ ] Aim 3: Process Raw Data in FlowKit
-    - 7/6/22
-
-3. [ ] Aim 4: Run COMPASS
     - 8/5/22
 
+3. [ ] Aim 4: Run COMPASS
+    - 9/2/22
+
 4. [ ] Aim 5: Publish Tutorial Code
-    - 8/12/22
+    - 9/16/22
  
 
 # Example Dataset Description
