@@ -63,14 +63,14 @@ COMPASS is a statistical framework that enables unbiased analysis of antigen-spe
 1. [X] Aim 2: Acquire Publicly Available/Shareable Flow Cytometry Dataset
     - 6/29/22
 
-2. [ ] Aim 3: Process Raw Data in FlowKit
-    - 8/5/22
+2. [X] Aim 3: Process Raw Data in FlowKit
+    - 7/1/22
 
-3. [ ] Aim 4: Run COMPASS
-    - 9/2/22
+3. [X] Aim 4: Run COMPASS
+    - 7/8/22
 
 4. [ ] Aim 5: Publish Tutorial Code
-    - 9/16/22
+    - 7/15/22
  
 
 # Example Dataset Description
@@ -123,15 +123,13 @@ Adapt Scott White's COMPASS FlowKit container with following tools:
 
 ## Aim 3: Process Raw Data in FlowKit
 
-1. [ ] Import and process raw FCS files using FlowKit
-2. [ ] QC checks
-    1. Identical channel names
-    2. Transformations
-    3. Compensation
-3. [ ] Create boolean vectors for all mutually exclusive subsets defined by manual gating
-4. [ ] Extract events corresponding to each unique subset
-5. [ ] Calculate counts for each subset
-6. [ ] Export counts to suitable data object for import to R
+1. [X] Import and process raw FCS files using FlowKit
+2. [X] QC checks
+    1. Transformations
+    2. Compensation
+3. [X] Create boolean vectors for all mutually exclusive subsets defined by manual gating
+4. [X] Calculate counts for each subset
+5. [X] Export counts to suitable data object for import to R
 
 ## Aim 4: Run COMPASS
 
@@ -141,13 +139,11 @@ Adapt Scott White's COMPASS FlowKit container with following tools:
 
 - Meet with Frances to get help with this
 
-1. [ ] Import data object containing all mutually exclusive subsets
-2. [ ] Create cell counts dataset
-3. [ ] Create metadata object
-4. [ ] Create COMPASS object
-5. [ ] Exploratory figures
-6. [ ] Run COMPASS model
-7. [ ] Generate heatmap
+1. [X] Import data object containing all mutually exclusive subsets
+2. [X] Create cell counts matrices
+3. [X] Create metadata object
+6. [X] Run COMPASS model via SimpleCOMPASS
+7. [X] Generate heatmap
 
 ## Aim 5: Publish Tutorial Code
 
