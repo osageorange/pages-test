@@ -1,26 +1,24 @@
 ---
-title: "FlowKit COMPASS Vignette"
-author: Tyler Schappe
-html:
-  toc: true
-  toc_float: true
-  df-print: paged
+title: "Analyzing Flow Cytometry Data with FlowKit and COMPASS"
+author: Tyler Schappe & Scott White
+date: 7/1/2022
+format:
+  html:
+    toc: true
+    toc_float: true
+    df-print: paged
 engine: knitr
 ---
 
-## List of Things to Check
+## Objectives
 
-1.  Custom gates for any samples?
-  - FlowKit 1.0 will have a way to check this automatically
-2.  Visualize gates to check shapes
-  - Rectangle vs quadrant
-  - Modify how to extract thresholds
-  - Min or Max, or both?
-3.  Compensation?
-4.  Transformations?
-
+The goal of this session is to illustrate how to process raw flow cytometry data (.fcs) and accompanying FlowJo workspace (.wsp) files using the Python tool [FlowKit](https://github.com/whitews/FlowKit) and perform a analysis of antigen specificity using the R package [COMPASS](https://www.bioconductor.org/packages/devel/bioc/html/COMPASS.html).
 
 ## Processing Raw Flow Cytometry Data Using FlowKit
+
+### FlowKit Setup
+
+We begin by importing needed libraries including FlowKit. 
 
 ```{r setup, include = FALSE}
 library(reticulate); library(knitr)
@@ -42,9 +40,6 @@ py_run_string('from bokeh.plotting import show')
 py_run_string('from bokeh.io import output_notebook')
 #py_run_string("output_notebook(resources=bokeh.resources.Resources(mode='cdn'), hide_banner=True)")
 ```
-
-
-### FlowKit Setup
 
 ```{python}
 # import os
@@ -68,6 +63,14 @@ fk.__version__
 
 #### Set the Data File Paths
 
+The data files are included in the FlowKit GitHub repo -- we simply cloned the repo to '/opt' and here we define the paths to the data directories. The data consists of 3 samples with 8 channels. 
+
+| Sample        | File name                           | Stimulation  |
+| ------------- | ------------------------------------| ------------ |
+| 1             | 101_DEN084Y5_15_E01_008_clean.fcs   | Unstimulated |
+| 2             | 101_DEN084Y5_15_E03_009_clean.fcs   | CMV          |
+| 3             | 101_DEN084Y5_15_E05_010_clean.fcs   | ?            |
+
 ```{python}
 data_dir = "/opt/flowkit/examples/data/8_color_data_set"
 sample_path = os.path.join(data_dir, "fcs_files")
@@ -86,7 +89,9 @@ session = fk.Session(sample_path)
 session.import_flowjo_workspace(wsp_path)
 ```
 
-#### Examine Dataset Summary
+#### Summary
+
+The 'summary' method provides a nice overview of the samples, sample groups, and gates within each. 
 
 ```{python}
 session.summary()
@@ -116,7 +121,9 @@ session.get_group_transforms(group_name = sample_group)
 
 The transforms here all look consistent across samples.
 
-#### Get the Sample IDs for the Sample Group of Interest
+#### Obtain Sample IDs
+
+We can extract the sample IDs from the sample group of interest using the 'get_group_sample_ids' method.
 
 ```{python}
 sample_list = session.get_group_sample_ids(sample_group)
@@ -125,6 +132,8 @@ sample_list
 ```
 
 ### Process the Samples
+
+We need to load and process the samples before proceeding. 
 
 ```{python}
 session.analyze_samples(sample_group, verbose = False)
@@ -135,6 +144,8 @@ session.analyze_samples(sample_group, verbose = False)
 We need to define a gate that is a direct parent of the gates we want to use to define the mutually exclusive cell subsets.
 
 #### Investigate the Gating Hierarchy
+
+We can print a diagram of the gating hierarchy to help determine which gate should be the parent gate.
 
 ```{python}
 print(session.get_gate_hierarchy(sample_group))
@@ -150,7 +161,7 @@ session.get_gate_ids(group_name=sample_group)
 
 #### Define the Target Parent Gate
 
-For simplicity, this vignette will use the CD4 gate as the parent and we will ignore the CD8 gate for now.
+**Important:** For simplicity, this vignette will use the CD4 gate as the parent and we will ignore the CD8 gate for now. Since there are 4 child gates within CD4+, we will have $2^{4} = 16$ possible combinations of these gates defining mutually exclusive event subsets. 
 
 ```{python}
 parent_gate_name = 'CD4+'
@@ -158,7 +169,7 @@ parent_gate_name = 'CD4+'
 
 #### Get the Parent Gate Path
 
-We can obtain child gate IDs and then extract the parent path from one of them (they're all the same)
+We can obtain child gate IDs and then extract the parent path from one of them (they're all the same). 
 
 ```{python}
 gate_ids = session.get_child_gate_ids(sample_group, parent_gate_name)
@@ -258,13 +269,12 @@ comp_ref = comp_refs[0]
 
 This step consists of essentially 2 parts:
 
-1.  If multiple threshold values were defined for a single child channel in FlowJo, find the mean among the min and max values
+1. If multiple threshold values were defined for a single child channel in FlowJo, find the mean among the min and max values
+  - Multiple threshold values can be defined when, for example, an analyst creates gates from scatter plots with the same channel multiple times
 
--   Multiple threshold values can be defined when, for example, an analyst creates gates from scatter plots with the same channel multiple times
-
-2.  For each child channel, create 2 new threshold gates:
-3.  Positive
-4.  Negative
+2. For each child channel, create 2 new threshold gates:
+  - Negative (-)
+  - Positive (+)
 
 **Note:** We determined above that the max values for the child rectangle gates are irrelevant, so we create our threshold gates based on the min values.
 
@@ -355,6 +365,8 @@ print(list(gate_pairs))
 
 #### Convert Index Permutations to Threshold Gate Permutations
 
+Here, we use the index combinations we created above to extract the corresponding gate names from the gate_pairs object.
+
 ```{python}
 # This will hold the set of gate names for each one of our divisions
 bool_gate_name_combos = []
@@ -371,6 +383,8 @@ for ic in idx_combos:
 ```
 
 #### Create the Boolean Gates
+
+Now, we can create the actual boolean gates using the combinations of threshold gates defined above. See the comments within the code chunk for details.
 
 ```{python}
 # This will hold the boolean gate unique IDs
@@ -411,25 +425,25 @@ for gate_name_combos in bool_gate_name_combos:
 
 #### Visualize the New Boolean Gates in the Gating Hierarchy
 
+Let's check that the new boolean gates were added to the gating hierarchy in the location we expect.
+
 ```{python}
 print(session.get_gate_hierarchy(sample_group))
 ```
 
 We can now see that we have added two sets of gates to our gating hierarchy:
 
-1.  
+1. Threshold gates for each child channel
+  - Recall that we used the mean cutoff value from the rectangle gates imported from FlowJo
 
-    -   and - threshold gates for each child channel
+2. Boolean gates for all possible permutations of the child gates
+  - These define mutually-exclusive subsets within CD4+ events
 
--   Recall that we used the mean cutoff value from the rectangle gates imported from FlowJo
-
-2.  Boolean gates for all possible permutations of the child gates
-
--   These define mutually-exclusive subsets within CD4+ events
-
-Note that while we chose a single sample from the sample group to derive these boolean gates, because all samples in a group have identical gating hierarchy, they will be valid for all samples.
+**Note:** While we chose a single sample from the sample group to derive these boolean gates, because all samples in a group have identical gating hierarchy, they will be valid for all samples.
 
 ### Calculate Counts for Each Cell Subset
+
+Now that we have the boolean gates defined in the session, we can extract a summary for all of the samples in the sample group that will contain event counts by sample and by gate. 
 
 #### Re-Analyze Samples
 
@@ -447,7 +461,9 @@ group_report = session.get_group_report(sample_group)
 
 Display the report for just the boolean gates
 
-#### Show Report for Each Sample in Sample Group
+#### Show Reports
+
+Let's take a look at the report generated for each sample. Below, we create a function to subset the report for just the boolean gates we created and with only the gate name, event count, and event percentages. 
 
 **Notes:**
 
@@ -513,39 +529,27 @@ counts_HIV = sample_report(sample_list[1])
 counts_unstim = sample_report(sample_list[2])
 ```
 
-### Extract Events for Each Population
-
-**Note:** We may not need this data according to Lynn in a meeting, but the [COMPASS vignette](https://www.bioconductor.org/packages/devel/bioc/vignettes/COMPASS/inst/doc/COMPASS.html) shows that we do.
-
-```{python}
-# for group_report:
-# session.get_wsp_gated_events(group_name = sample_group,
-#                              sample_ids = sample_list,
-#                              gate_name = ,
-#                              gate_path =
-#                             )
-```
-
-
+This concludes the workflow within FlowKit. We can now transition to using COMPASS within R. 
 
 ## Running COMPASS
 
 ### Brief Background of COMPASS
 
-COMPASS is a tool that uses mixture models.
+COMPASS is a statistical framework that enables unbiased analysis of antigen-specific T-cell subsets. COMPASS uses a Bayesian hierarchical framework to model all observed cell-subsets and select the most likely to be antigen-specific while regularizing the small cell counts that often arise in multi-parameter space. The model provides a posterior probability of specificity for each cell subset and each sample, which can be used to profile a subject's immune response to external stimuli such as infection or vaccination.
 
-Provides two summary outputs for each subject/individual:
+COMPASS can provide two summary outputs for each subject/individual:
 
 1. The functionality score (FS): Defined as the proportion of antigen-specific subsets detected among all possible ones
 2. The polyfunctionality score (PFS) is similar, but it weighs the different subsets by their degree of functionality, naturally favoring subsets with higher degrees of functionality, motivated by the observations that a higher-degree function has been correlated with good outcomes in certain vaccine studies
 
-```{r}
+
+### Setup
+
+```{r COMPASS setup, echo=T, results='hide', message=FALSE, warning=FALSE}
 library(reticulate); library(COMPASS); library(tidyverse); library(readxl)
 ```
 
-### Data Setup
-
-#### Transfer Count Data from Python
+#### Transfer Count Data to R
 
 We can transfer the counts objects from the Python environment to the R environment easily using the syntax 'py$'
 
@@ -573,7 +577,7 @@ mat.HIV <- as.matrix(
 )
 ```
 
-Next, we assign the unique gate names to the columns of each matrix. We remove the 'CD4+_' prefix and any commas in accordance with the requirements of COMPASS. 
+Next, we assign the unique gate names to the columns of each matrix. We remove the 'CD4+_' prefix and any commas in accordance with the requirements of COMPASS.
 
 ```{r}
 colnames(mat.unstim) <- gsub(',', '', gsub('CD4\\+_', '', counts.unstim$gate_name))
@@ -662,7 +666,7 @@ is.matrix(mat.stim); is.matrix(mat.unstim); is.data.frame(metadata)
 
 Finally, we can fit the COMPASS model by passing our data objects to the SimpleCOMPASS() function. We also specify that the variable within the metadata object indicating individual samples is "unique_id". 
 
-```{r COMPASS, include = FALSE}
+```{r COMPASS, echo=TRUE, results='hide', warning=FALSE, message=FALSE}
 compass.fit = COMPASS::SimpleCOMPASS(n_s = mat.stim,
                                      n_u = mat.unstim,
                                      meta = metadata,
@@ -680,7 +684,7 @@ compass.fit = COMPASS::SimpleCOMPASS(n_s = mat.stim,
 We can plot a heatmap of the mean probability of response in order to visualize differences in expression for each type of stimulation relative to the unstimulated sample.
 
 ```{r}
-plot(compass.fit, "Group")
+plot(compass.fit)
 ```
 
 #### Functional and PolyFunctional Scores
