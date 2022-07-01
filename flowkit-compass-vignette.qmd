@@ -7,55 +7,51 @@ format:
     toc: true
     toc_float: true
     df-print: paged
-engine: knitr
+engine: jupyter
+jupyter: python3
 ---
 
 ## Objectives
 
-The goal of this session is to illustrate how to process raw flow cytometry data (.fcs) and accompanying FlowJo workspace (.wsp) files using the Python tool [FlowKit](https://github.com/whitews/FlowKit) and perform a analysis of antigen specificity using the R package [COMPASS](https://www.bioconductor.org/packages/devel/bioc/html/COMPASS.html).
+The goal of this session is to illustrate how to process raw flow cytometry data (.fcs) and accompanying FlowJo workspace (.wsp) files using the Python tool [FlowKit](https://github.com/whitews/FlowKit) and perform an analysis of antigen specificity using the R package [COMPASS](https://www.bioconductor.org/packages/devel/bioc/html/COMPASS.html).
+
+COMPASS requires counts of mutually-exclusive subsets of events as input, which can be identified using all permutations of a set of markers. For example, if we have four markers (CD107a, IFNg, IL2, TNFa) and each event can have two states for each marker (+ or -), then there are $2^4$ possible mutually-exclusive subsets. Using FlowKit, we will create a boolean gate for each of these subsets and then derive counts of events in each, which will serve as the input data for COMPASS. 
+
+This session is comprised of two main components:
+
+1. Processing raw files and deriving event counts in each subset
+2. Running COMPASS
+
 
 ## Processing Raw Flow Cytometry Data Using FlowKit
 
 ### FlowKit Setup
 
-We begin by importing needed libraries including FlowKit. 
-
-```{r setup, include = FALSE}
-library(reticulate); library(knitr)
-use_python("/usr/bin/python3")
-options(reticulate.repl.quiet = TRUE)
-
-knitr::knit_engines$set(python = reticulate::eng_python)
-knitr::opts_chunk$set(python.reticulate = TRUE)
-
-py_run_string('import os')
-py_run_string('import flowkit as fk')
-py_run_string('import numpy as np')
-py_run_string('import pandas as pd')
-py_run_string('import anndata as ad')
-py_run_string('import itertools')
-py_run_string('import bokeh')
-py_run_string('import copy')
-py_run_string('from bokeh.plotting import show')
-py_run_string('from bokeh.io import output_notebook')
-#py_run_string("output_notebook(resources=bokeh.resources.Resources(mode='cdn'), hide_banner=True)")
-```
+We begin by importing needed libraries including FlowKit and rpy2 so we can use R.
 
 ```{python}
-# import os
-# import flowkit as fk
-# import numpy as np
-# import pandas as pd
-# import anndata as ad
-# import itertools
-# import bokeh
-# import copy
-# 
-# from bokeh.plotting import show
-# #Example of Bokeh in Quarto (http://dev.ipol.im/~qbammey/quarto.html#/alternative-bokeh)
-# from bokeh.io import output_notebook #Needed for Bokeh in Quarto
-# output_notebook(resources=bokeh.resources.Resources(mode='cdn'), hide_banner=True) #Needed for Bokeh in Quarto
+import os
+import flowkit as fk
+import numpy as np
+import pandas as pd
+import anndata as ad
+import itertools
+import bokeh
+import copy
+import rpy2
 
+from bokeh.plotting import show
+#Example of Bokeh in Quarto (http://dev.ipol.im/~qbammey/quarto.html#/alternative-bokeh)
+from bokeh.io import output_notebook #Needed for Bokeh in Quarto
+output_notebook(resources=bokeh.resources.Resources(mode='cdn'), hide_banner=True) #Needed for Bokeh in Quarto
+
+# For R magicks in python
+%load_ext rpy2.ipython
+import rpy2.robjects as ro
+from rpy2.robjects.packages import importr
+from rpy2.robjects import pandas2ri
+from rpy2.robjects.conversion import localconverter
+import session_info
 
 # Check version so users can verify they have the same version/API
 fk.__version__
@@ -545,44 +541,42 @@ COMPASS can provide two summary outputs for each subject/individual:
 
 ### Setup
 
-```{r COMPASS setup, echo=T, results='hide', message=FALSE, warning=FALSE}
-library(reticulate); library(COMPASS); library(tidyverse); library(readxl)
-```
+**Note:** The following code chunks use rpy2 to run R from within Python. The %%R operator on the first line of each chunk will enable the chunk to be executed in R. 
 
 #### Transfer Count Data to R
 
-We can transfer the counts objects from the Python environment to the R environment easily using the syntax 'py$'
-
-```{r}
-counts.unstim <- py$counts_unstim
-counts.CMV <- py$counts_CMV
-counts.HIV <- py$counts_HIV
-```
+We can transfer the counts objects from the Python environment to the R environment easily using rpy2 via the '%%R -i' syntax which imports an object to the R environment. 
 
 #### Create Data Matrices
 
 We create a matrix for CMV- and HIV-stimulated samples, and for the unstimulated sample by transposing the counts vectors. 
 
-```{r}
-mat.unstim <- as.matrix(
-  t(counts.unstim$count)
-)
+```{python}
+%%R -i counts_unstim
 
-mat.CMV <- as.matrix(
-  t(counts.CMV$count)
-)
+mat.unstim = as.matrix(t(counts_unstim$count))
+```
 
-mat.HIV <- as.matrix(
-  t(counts.HIV$count)
-)
+```{python}
+%%R -i counts_CMV
+
+mat.CMV = as.matrix(t(counts_CMV$count))
+```
+
+```{python}
+%%R -i counts_HIV
+
+mat.HIV = as.matrix(t(counts_HIV$count))
 ```
 
 Next, we assign the unique gate names to the columns of each matrix. We remove the 'CD4+_' prefix and any commas in accordance with the requirements of COMPASS.
 
-```{r}
-colnames(mat.unstim) <- gsub(',', '', gsub('CD4\\+_', '', counts.unstim$gate_name))
-colnames(mat.CMV) <- gsub(',', '', gsub('CD4\\+_', '', counts.CMV$gate_name))
-colnames(mat.HIV) <- gsub(',', '', gsub('CD4\\+_', '', counts.HIV$gate_name))
+```{python}
+%%R
+
+colnames(mat.unstim) <- gsub(',', '', gsub('CD4\\+_', '', counts_unstim$gate_name))
+colnames(mat.CMV) <- gsub(',', '', gsub('CD4\\+_', '', counts_CMV$gate_name))
+colnames(mat.HIV) <- gsub(',', '', gsub('CD4\\+_', '', counts_HIV$gate_name))
 ```
 
 #### Create Metadata
@@ -593,28 +587,29 @@ The metadata should include unique sample IDs and any other relevant information
 
 We first need to prepare the sample IDs using the raw FCS file names from the Python object 'sample_list'. We parse these file names using '_' and extract the relevant terms for these samples. We then append a count to each of these to make them unique. 
 
-```{r}
-sample.ids <- as.data.frame(py$sample_list) %>%
-  tidyr::separate(sep = "_", col = "py$sample_list", into = c(NA, "sample", NA, NA, NA, NA)) %>%
-  deframe() %>%
-  paste(c("1", "2", "3"), sep = "_")
+```{python}
+%%R -i sample_list
+
+library(tidyverse)
+
+sample.ids <- as.data.frame(sample_list) %>% tidyr::separate(sep = "_", col = "sample_list", into = c(NA, "sample", NA, NA, NA, NA)) %>% deframe() %>% paste(c("1", "2", "3"), sep = "_")
 ```
 
 Now we can make the metadata object with the unique sample IDs, an indicator variable for stimulated vs unstimulated, and a variable indicating the type of stimulation.
 
-```{r}
-metadata <- data.frame(
-  unique_id = sample.ids,
-  Stimulation = c("unstim", "stim", "stim"),
-  Group = c("unstim", "CMV", "HIV")
-)
+```{python}
+%%R 
+
+metadata <- data.frame(unique_id = sample.ids, Stimulation = c("unstim", "stim", "stim"), Group = c("unstim", "CMV", "HIV"))
 ```
 
 #### Combine CMV and HIV
 
 As noted above, we treat the CMV-stimulated and HIV-stimulated replicates for this single sample as two samples for this analysis. In order to do so, we need to combine the CMV and HIV count matrices row-wise into a single matrix. We also create an unstimulated matrix by repeating the single vector of unstimulated counts twice row-wise into a matrix. While unconventional, this will provide CMV-stimulated vs unstimulated and HIV-stimulated vs unstimulated comparisons. 
 
-```{r}
+```{python}
+%%R
+
 mat.stim <- rbind(mat.CMV, mat.HIV)
 mat.unstim <- rbind(mat.unstim[1,], mat.unstim[1,])
 ```
@@ -623,7 +618,9 @@ mat.unstim <- rbind(mat.unstim[1,], mat.unstim[1,])
 
 The rownames of both count matrices need to match the "unique_id" column of the metadata dataframe, so we assign them accordingly.
 
-```{r}
+```{python}
+%%R 
+
 rownames(mat.stim) <- metadata$unique_id[metadata$Group %in% c("CMV", "HIV")]
 rownames(mat.unstim) <- metadata$unique_id[metadata$Group %in% c("CMV", "HIV")]
 ```
@@ -632,7 +629,9 @@ rownames(mat.unstim) <- metadata$unique_id[metadata$Group %in% c("CMV", "HIV")]
 
 The number of rows in the metadata object need to match the number of rows in each count matrix. We therefore subset to include only the stimulated samples.
 
-```{r}
+```{python}
+%%R 
+
 metadata <- metadata[metadata$Group %in% c("CMV", "HIV") ,]
 ```
 
@@ -640,18 +639,20 @@ metadata <- metadata[metadata$Group %in% c("CMV", "HIV") ,]
 
 Above we assigned the column names of each data matrix as the unique gating hierarchy/combination for each cell subset where a '+' indicates the marker is expressed and '-' indicates that it is not. COMPASS requires these strings to be in a specific format, and contains a function to parse an existing string into the proper format that it expects. Notably, '-' is converted into the 'not' operator !. 
 
-```{r}
+```{python}
+%%R 
+
 colnames(mat.stim) <- COMPASS:::translate_marker_names(colnames(mat.stim))
 colnames(mat.unstim) <- COMPASS:::translate_marker_names(colnames(mat.unstim))
-
-colnames(mat.stim)
 ```
 
 #### Checks
 
 **Important:** COMPASS requires that the final column of each count matrix is the cell subset in which all markers are '-'. Luckily, we created the boolean gates above in such a way that this ended up being the case. Below we check this to make sure. 
 
-```{r checks}
+```{python checks}
+%%R
+
 # Check that the last column contains the subset with all markers being '-'
 colnames(mat.stim)[ncol(mat.stim)]
 
@@ -666,15 +667,14 @@ is.matrix(mat.stim); is.matrix(mat.unstim); is.data.frame(metadata)
 
 Finally, we can fit the COMPASS model by passing our data objects to the SimpleCOMPASS() function. We also specify that the variable within the metadata object indicating individual samples is "unique_id". 
 
-```{r COMPASS, echo=TRUE, results='hide', warning=FALSE, message=FALSE}
-compass.fit = COMPASS::SimpleCOMPASS(n_s = mat.stim,
-                                     n_u = mat.unstim,
-                                     meta = metadata,
-                                     individual_id = "unique_id",
-                                     iterations = 10000,
-                                     replications = 8,
-                                     verbose = FALSE
-)
+```{python}
+#| echo: true
+#| results: hide
+#| warning: false
+#| message: false
+%%R 
+
+compass.fit = COMPASS::SimpleCOMPASS(n_s = mat.stim, n_u = mat.unstim, meta = metadata, individual_id = "unique_id", iterations = 10000, replications = 8, verbose = FALSE)
 ```
 
 ### COMPASS Results
@@ -683,7 +683,9 @@ compass.fit = COMPASS::SimpleCOMPASS(n_s = mat.stim,
 
 We can plot a heatmap of the mean probability of response in order to visualize differences in expression for each type of stimulation relative to the unstimulated sample.
 
-```{r}
+```{python}
+%%R 
+
 plot(compass.fit)
 ```
 
@@ -691,18 +693,27 @@ plot(compass.fit)
 
 These are measures of the overall level of 'functionality' of a cell, which has shown to be correlated with a cell's affinity in immune response. 
 
-```{r}
-FS <- FunctionalityScore(compass.fit)
-PFS <- PolyfunctionalityScore(compass.fit)
+```{python}
+%%R
+
+FS <- COMPASS::FunctionalityScore(compass.fit)
+PFS <- COMPASS::PolyfunctionalityScore(compass.fit)
 
 metadata$FS <- FS
 metadata$PFS <- PFS
-
-metadata
 ```
 
+Convert the R metadata dataframe to a Pandas Dataframe for nice visualization.
 
-```{r}
-sessionInfo()
+```{python}
+with localconverter(ro.default_converter + pandas2ri.converter):
+  metadata_df = ro.conversion.rpy2py(ro.r['metadata'])
+
+metadata_df
 ```
 
+## Session Info
+
+```{python sessioninfo}
+session_info.show()
+```
