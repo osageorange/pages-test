@@ -92,31 +92,15 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <script src="flowkit-compass-vignette_files/libs/bootstrap/bootstrap.min.js"></script>
 <link href="flowkit-compass-vignette_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
 <link href="flowkit-compass-vignette_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" integrity="sha512-c3Nl8+7g4LMSTdrm621y7kf9v3SDPnhxLNhcjFJbKECVnmZHTdo+IRO05sNLTH/D3vA6u1X32ehoLC7WFVdheg==" crossorigin="anonymous"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js" integrity="sha512-bLT0Qm9VnAYZDflyKcBaQ2gg0hSYNQrJ8RilYldYQ1FxQYoCLtUjuuRuZo+fjqhx/qtq/1itJ0C2ejDxltZVFg==" crossorigin="anonymous"></script>
-<script type="application/javascript">define('jquery', [],function() {return window.jQuery;})</script>
 
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
 
 </head>
 
-<body>
+<body class="fullcontent">
 
 <div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
-<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
-  <nav id="TOC" role="doc-toc">
-    <h2 id="toc-title">Table of contents</h2>
-   
-  <ul>
-  <li><a href="#processing-raw-flow-cytometry-data-using-flowkit" id="toc-processing-raw-flow-cytometry-data-using-flowkit" class="nav-link active" data-scroll-target="#processing-raw-flow-cytometry-data-using-flowkit">Processing Raw Flow Cytometry Data Using FlowKit</a>
-  <ul class="collapse">
-  <li><a href="#flowkit-setup" id="toc-flowkit-setup" class="nav-link" data-scroll-target="#flowkit-setup">FlowKit Setup</a></li>
-  <li><a href="#load-raw-flow-cytometry-data" id="toc-load-raw-flow-cytometry-data" class="nav-link" data-scroll-target="#load-raw-flow-cytometry-data">Load Raw Flow Cytometry Data</a></li>
-  <li><a href="#check-transformations" id="toc-check-transformations" class="nav-link" data-scroll-target="#check-transformations">Check Transformations</a></li>
-  <li><a href="#choose-a-gate-of-interest" id="toc-choose-a-gate-of-interest" class="nav-link" data-scroll-target="#choose-a-gate-of-interest">Choose a Gate of Interest</a></li>
-  </ul></li>
-  </ul>
-</nav>
-</div>
+
 <main class="content" id="quarto-document-content">
 
 <header id="title-block-header" class="quarto-title-block default">
@@ -141,92 +125,91 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 
 </header>
 
+<section id="list-of-things-to-check" class="level2">
+<h2 class="anchored" data-anchor-id="list-of-things-to-check">List of Things to Check</h2>
+<ol type="1">
+<li>Custom gates for any samples?</li>
+</ol>
+<ul>
+<li>FlowKit 1.0 will have a way to check this automatically</li>
+</ul>
+<ol start="2" type="1">
+<li>Visualize gates to check shapes</li>
+</ol>
+<ul>
+<li>Rectangle vs quadrant</li>
+<li>Modify how to extract thresholds</li>
+<li>Min or Max, or both?</li>
+</ul>
+<ol start="3" type="1">
+<li>Compensation?</li>
+<li>Transformations?</li>
+</ol>
+</section>
 <section id="processing-raw-flow-cytometry-data-using-flowkit" class="level2">
 <h2 class="anchored" data-anchor-id="processing-raw-flow-cytometry-data-using-flowkit">Processing Raw Flow Cytometry Data Using FlowKit</h2>
 <section id="flowkit-setup" class="level3">
 <h3 class="anchored" data-anchor-id="flowkit-setup">FlowKit Setup</h3>
-<div class="cell" data-execution_count="1">
-<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> os</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> flowkit <span class="im">as</span> fk</span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> anndata <span class="im">as</span> ad</span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Check version so users can verify they have the same version/API</span></span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>fk.__version__</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="1">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># import os</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="co"># import flowkit as fk</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="co"># import numpy as np</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="co"># import pandas as pd</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="co"># import anndata as ad</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="co"># import itertools</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="co"># import bokeh</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="co"># import copy</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="co"># </span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="co"># from bokeh.plotting import show</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="co"># #Example of Bokeh in Quarto (http://dev.ipol.im/~qbammey/quarto.html#/alternative-bokeh)</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="co"># from bokeh.io import output_notebook #Needed for Bokeh in Quarto</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="co"># output_notebook(resources=bokeh.resources.Resources(mode='cdn'), hide_banner=True) #Needed for Bokeh in Quarto</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="co"># Check version so users can verify they have the same version/API</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>fk.__version__</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
 <pre><code>'0.9.1'</code></pre>
 </div>
 </div>
+<section id="set-the-data-file-paths" class="level4">
+<h4 class="anchored" data-anchor-id="set-the-data-file-paths">Set the Data File Paths</h4>
+<div class="cell">
 <div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>data_dir <span class="op">=</span> <span class="st">"/opt/flowkit/examples/data/8_color_data_set"</span></span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>sample_path <span class="op">=</span> os.path.join(data_dir, <span class="st">"fcs_files"</span>)</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>wsp_path <span class="op">=</span> os.path.join(data_dir, <span class="st">"8_color_ICS.wsp"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
 </section>
-<section id="load-raw-flow-cytometry-data" class="level3">
-<h3 class="anchored" data-anchor-id="load-raw-flow-cytometry-data">Load Raw Flow Cytometry Data</h3>
+</section>
+<section id="load-raw-flow-cytometry-data-files" class="level3">
+<h3 class="anchored" data-anchor-id="load-raw-flow-cytometry-data-files">Load Raw Flow Cytometry Data Files</h3>
 <p>We create a FlowKit session using the FCS files. We also import a corresponding FlowJo workspace (.wsp) file that contains any compensations, transformations, and manual gating done in FlowJo.</p>
+<div class="cell">
 <div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Create a Session with the path to our FCS files. </span></span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>session <span class="op">=</span> fk.Session(sample_path)</span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Import a FlowJo 10 workspace file</span></span>
 <span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>session.import_flowjo_workspace(wsp_path)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
 <section id="examine-dataset-summary" class="level4">
 <h4 class="anchored" data-anchor-id="examine-dataset-summary">Examine Dataset Summary</h4>
-<div class="cell" data-execution_count="4">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>session.summary()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="4">
-
-<div>
-
-<table class="dataframe table table-sm table-striped">
-  <thead>
-    <tr>
-      <th></th>
-      <th>samples</th>
-      <th>loaded_samples</th>
-      <th>gates</th>
-      <th>max_gate_depth</th>
-    </tr>
-    <tr>
-      <th>group_name</th>
-      <th></th>
-      <th></th>
-      <th></th>
-      <th></th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th>default</th>
-      <td>3</td>
-      <td>3</td>
-      <td>0</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <th>All Samples</th>
-      <td>3</td>
-      <td>3</td>
-      <td>0</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <th>DEN</th>
-      <td>3</td>
-      <td>3</td>
-      <td>14</td>
-      <td>6</td>
-    </tr>
-  </tbody>
-</table>
-</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>             samples  loaded_samples  gates  max_gate_depth
+group_name                                                 
+default            3               3      0               0
+All Samples        3               3      0               0
+DEN                3               3     14               6</code></pre>
 </div>
 </div>
 </section>
 <section id="choose-the-sample-group" class="level4">
 <h4 class="anchored" data-anchor-id="choose-the-sample-group">Choose the Sample Group</h4>
 <p>From the summary, we can see all of the samples that have manual gating are in the ‘DEN’ sample group, so we infer this is the group of interest.</p>
-<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>sample_group <span class="op">=</span> <span class="st">'DEN'</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>sample_group <span class="op">=</span> <span class="st">'DEN'</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
 </section>
 </section>
 <section id="check-transformations" class="level3">
@@ -238,55 +221,38 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <li>We don’t really care about the time channel since we will be excluding it later.</li>
 </ul>
 <p>The results here include any transformations that were applied to any channel in FlowJo from the FCS in the workspace in that sample group.</p>
-<div class="cell" data-execution_count="6">
-<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>session.get_group_transforms(group_name<span class="op">=</span>sample_group)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="6">
-<pre><code>[LinearTransform(FSC-A, t: 262144.0, a: 0.0),
- LinearTransform(FSC-H, t: 262144.0, a: 0.0),
- LinearTransform(FSC-W, t: 262144.0, a: 0.0),
- LinearTransform(SSC-A, t: 262144.0, a: 0.0),
- LinearTransform(SSC-H, t: 262144.0, a: 0.0),
- LinearTransform(SSC-W, t: 262144.0, a: 0.0),
- LogicleTransform(TNFa FITC FLR-A, t: 262144.0, w: 1.0, m: 4.418539922, a: 0.0),
- LogicleTransform(CD8 PerCP-Cy55 FLR-A, t: 262144.0, w: 1.0, m: 4.418539922, a: 0.0),
- LogicleTransform(IL2 BV421 FLR-A, t: 262144.0, w: 1.0, m: 4.418539922, a: 0.0),
- LogicleTransform(Aqua Amine FLR-A, t: 262144.0, w: 1.0, m: 4.418539922, a: 0.0),
- LogicleTransform(IFNg APC FLR-A, t: 262144.0, w: 1.0, m: 4.418539922, a: 0.0),
- LogicleTransform(CD3 APC-H7 FLR-A, t: 262144.0, w: 1.0, m: 4.418539922, a: 0.0),
- LogicleTransform(CD107a PE FLR-A, t: 262144.0, w: 1.0, m: 4.418539922, a: 0.0),
- LogicleTransform(CD4 PE-Cy7 FLR-A, t: 262144.0, w: 1.0, m: 4.418539922, a: 0.0),
- LinearTransform(Time, t: 72.0, a: 0.8511997311),
- LogicleTransform(Comp-TNFa FITC FLR-A, t: 262144.0, w: 1.0, m: 4.418539922, a: 0.0),
- LogicleTransform(Comp-CD8 PerCP-Cy55 FLR-A, t: 262144.0, w: 1.0, m: 4.418539922, a: 0.0),
- LogicleTransform(Comp-IL2 BV421 FLR-A, t: 262144.0, w: 1.0, m: 4.418539922, a: 0.0),
- LogicleTransform(Comp-Aqua Amine FLR-A, t: 262144.0, w: 1.0, m: 4.418539922, a: 0.0),
- LogicleTransform(Comp-IFNg APC FLR-A, t: 262144.0, w: 1.0, m: 4.418539922, a: 0.0),
- LogicleTransform(Comp-CD3 APC-H7 FLR-A, t: 262144.0, w: 1.0, m: 4.418539922, a: 0.0),
- LogicleTransform(Comp-CD107a PE FLR-A, t: 262144.0, w: 1.0, m: 4.418539922, a: 0.0),
- LogicleTransform(Comp-CD4 PE-Cy7 FLR-A, t: 262144.0, w: 1.0, m: 4.418539922, a: 0.0)]</code></pre>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>session.get_group_transforms(group_name <span class="op">=</span> sample_group)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[LinearTransform(FSC-A, t: 262144.0, a: 0.0), LinearTransform(FSC-H, t: 262144.0, a: 0.0), LinearTransform(FSC-W, t: 262144.0, a: 0.0), LinearTransform(SSC-A, t: 262144.0, a: 0.0), LinearTransform(SSC-H, t: 262144.0, a: 0.0), LinearTransform(SSC-W, t: 262144.0, a: 0.0), LogicleTransform(TNFa FITC FLR-A, t: 262144.0, w: 1.0, m: 4.418539922, a: 0.0), LogicleTransform(CD8 PerCP-Cy55 FLR-A, t: 262144.0, w: 1.0, m: 4.418539922, a: 0.0), LogicleTransform(IL2 BV421 FLR-A, t: 262144.0, w: 1.0, m: 4.418539922, a: 0.0), LogicleTransform(Aqua Amine FLR-A, t: 262144.0, w: 1.0, m: 4.418539922, a: 0.0), LogicleTransform(IFNg APC FLR-A, t: 262144.0, w: 1.0, m: 4.418539922, a: 0.0), LogicleTransform(CD3 APC-H7 FLR-A, t: 262144.0, w: 1.0, m: 4.418539922, a: 0.0), LogicleTransform(CD107a PE FLR-A, t: 262144.0, w: 1.0, m: 4.418539922, a: 0.0), LogicleTransform(CD4 PE-Cy7 FLR-A, t: 262144.0, w: 1.0, m: 4.418539922, a: 0.0), LinearTransform(Time, t: 72.0, a: 0.8511997311), LogicleTransform(Comp-TNFa FITC FLR-A, t: 262144.0, w: 1.0, m: 4.418539922, a: 0.0), LogicleTransform(Comp-CD8 PerCP-Cy55 FLR-A, t: 262144.0, w: 1.0, m: 4.418539922, a: 0.0), LogicleTransform(Comp-IL2 BV421 FLR-A, t: 262144.0, w: 1.0, m: 4.418539922, a: 0.0), LogicleTransform(Comp-Aqua Amine FLR-A, t: 262144.0, w: 1.0, m: 4.418539922, a: 0.0), LogicleTransform(Comp-IFNg APC FLR-A, t: 262144.0, w: 1.0, m: 4.418539922, a: 0.0), LogicleTransform(Comp-CD3 APC-H7 FLR-A, t: 262144.0, w: 1.0, m: 4.418539922, a: 0.0), LogicleTransform(Comp-CD107a PE FLR-A, t: 262144.0, w: 1.0, m: 4.418539922, a: 0.0), LogicleTransform(Comp-CD4 PE-Cy7 FLR-A, t: 262144.0, w: 1.0, m: 4.418539922, a: 0.0)]</code></pre>
 </div>
 </div>
 <p>The transforms here all look consistent across samples.</p>
 <section id="get-the-sample-ids-for-the-sample-group-of-interest" class="level4">
 <h4 class="anchored" data-anchor-id="get-the-sample-ids-for-the-sample-group-of-interest">Get the Sample IDs for the Sample Group of Interest</h4>
-<div class="cell" data-execution_count="7">
-<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>sample_list <span class="op">=</span> session.get_group_sample_ids(sample_group)</span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>sample_list</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="7">
-<pre><code>['101_DEN084Y5_15_E05_010_clean.fcs',
- '101_DEN084Y5_15_E03_009_clean.fcs',
- '101_DEN084Y5_15_E01_008_clean.fcs']</code></pre>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>sample_list <span class="op">=</span> session.get_group_sample_ids(sample_group)</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>sample_list</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>['101_DEN084Y5_15_E03_009_clean.fcs', '101_DEN084Y5_15_E05_010_clean.fcs', '101_DEN084Y5_15_E01_008_clean.fcs']</code></pre>
 </div>
 </div>
 </section>
 </section>
-<section id="choose-a-gate-of-interest" class="level3">
-<h3 class="anchored" data-anchor-id="choose-a-gate-of-interest">Choose a Gate of Interest</h3>
+<section id="process-the-samples" class="level3">
+<h3 class="anchored" data-anchor-id="process-the-samples">Process the Samples</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>session.analyze_samples(sample_group, verbose <span class="op">=</span> <span class="va">False</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="choose-a-parent-gate" class="level3">
+<h3 class="anchored" data-anchor-id="choose-a-parent-gate">Choose a Parent Gate</h3>
+<p>We need to define a gate that is a direct parent of the gates we want to use to define the mutually exclusive cell subsets.</p>
 <section id="investigate-the-gating-hierarchy" class="level4">
 <h4 class="anchored" data-anchor-id="investigate-the-gating-hierarchy">Investigate the Gating Hierarchy</h4>
-<div class="cell" data-execution_count="8">
-<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(session.get_gate_hierarchy(sample_group))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(session.get_gate_hierarchy(sample_group))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>root
 ╰── Time
@@ -303,6 +269,738 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
                     ├── IFNg+
                     ├── IL2+
                     ╰── TNFa+</code></pre>
+</div>
+</div>
+</section>
+<section id="examine-all-gates-for-the-sample-group" class="level4">
+<h4 class="anchored" data-anchor-id="examine-all-gates-for-the-sample-group">Examine All Gates for the Sample Group</h4>
+<p>Note a gate ID is a combination of the gate name plus its gate path</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>session.get_gate_ids(group_name<span class="op">=</span>sample_group)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[('Time', ('root',)), ('Singlets', ('root', 'Time')), ('aAmine-', ('root', 'Time', 'Singlets')), ('CD3+', ('root', 'Time', 'Singlets', 'aAmine-')), ('CD4+', ('root', 'Time', 'Singlets', 'aAmine-', 'CD3+')), ('CD107a+', ('root', 'Time', 'Singlets', 'aAmine-', 'CD3+', 'CD4+')), ('IFNg+', ('root', 'Time', 'Singlets', 'aAmine-', 'CD3+', 'CD4+')), ('IL2+', ('root', 'Time', 'Singlets', 'aAmine-', 'CD3+', 'CD4+')), ('TNFa+', ('root', 'Time', 'Singlets', 'aAmine-', 'CD3+', 'CD4+')), ('CD8+', ('root', 'Time', 'Singlets', 'aAmine-', 'CD3+')), ('CD107a+', ('root', 'Time', 'Singlets', 'aAmine-', 'CD3+', 'CD8+')), ('IFNg+', ('root', 'Time', 'Singlets', 'aAmine-', 'CD3+', 'CD8+')), ('IL2+', ('root', 'Time', 'Singlets', 'aAmine-', 'CD3+', 'CD8+')), ('TNFa+', ('root', 'Time', 'Singlets', 'aAmine-', 'CD3+', 'CD8+'))]</code></pre>
+</div>
+</div>
+</section>
+<section id="define-the-target-parent-gate" class="level4">
+<h4 class="anchored" data-anchor-id="define-the-target-parent-gate">Define the Target Parent Gate</h4>
+<p>For simplicity, this vignette will use the CD4 gate as the parent and we will ignore the CD8 gate for now.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>parent_gate_name <span class="op">=</span> <span class="st">'CD4+'</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="get-the-parent-gate-path" class="level4">
+<h4 class="anchored" data-anchor-id="get-the-parent-gate-path">Get the Parent Gate Path</h4>
+<p>We can obtain child gate IDs and then extract the parent path from one of them (they’re all the same)</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>gate_ids <span class="op">=</span> session.get_child_gate_ids(sample_group, parent_gate_name)</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>parent_gate_path <span class="op">=</span> gate_ids[<span class="dv">0</span>][<span class="dv">1</span>]</span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>parent_gate_path</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>('root', 'Time', 'Singlets', 'aAmine-', 'CD3+', 'CD4+')</code></pre>
+</div>
+</div>
+</section>
+</section>
+<section id="visualize-the-gates-from-flowjo" class="level3">
+<h3 class="anchored" data-anchor-id="visualize-the-gates-from-flowjo">Visualize the Gates from FlowJo</h3>
+<p>This step is very important to determine how to decide cutoff values to use for the threshold gates that we create below. We need to determine the intent of the manual gates. For example, if rectangle gates were used, for each dimension/marker, we need to decide whether the min, max, or both values were relevant in that they actually excluded some events, or whether they did not exclude any events and are simply an artifact of making a rectangle gate. A common scenario is where an analyst uses a rectangle gate to select a sub-population that have large values of a marker; while the rectangle gate forces a technical maximum value for that marker, the intent of the analyst may be to include any event with a value above some threshold, in which case the maximum value imposed by the rectangle gate is set arbitrarily high so as to no exclude any events above it. In such a case, the maximum value is not relevant and we can simply focus on the minimum value for the gate.</p>
+<section id="define-a-single-sample-in-the-sample-group" class="level4">
+<h4 class="anchored" data-anchor-id="define-a-single-sample-in-the-sample-group">Define a Single Sample in the Sample Group</h4>
+<p>Because all samples within the sample group share the same gate hierarchy, we can just pick one sample. However, it’s possible that samples have different gating cutoffs, so beware!</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>sample_id <span class="op">=</span> <span class="st">'101_DEN084Y5_15_E05_010_clean.fcs'</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>sample <span class="op">=</span> session.get_sample(sample_id)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="get-child-gate-information" class="level4">
+<h4 class="anchored" data-anchor-id="get-child-gate-information">Get Child Gate Information</h4>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>quadrant_gates <span class="op">=</span> {}</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (gate_name, gate_path) <span class="kw">in</span> gate_ids:</span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>  quadrant_gates[gate_name] <span class="op">=</span> session.get_gate(sample_group, gate_name, gate_path)</span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a>quadrant_gates</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>{'CD107a+': GMLRectangleGate(CD107a+, parent: CD4+, dims: 2), 'IFNg+': GMLRectangleGate(IFNg+, parent: CD4+, dims: 2), 'IL2+': GMLRectangleGate(IL2+, parent: CD4+, dims: 2), 'TNFa+': GMLRectangleGate(TNFa+, parent: CD4+, dims: 2)}</code></pre>
+</div>
+</div>
+</section>
+<section id="plot-child-gates" class="level4">
+<h4 class="anchored" data-anchor-id="plot-child-gates">Plot Child Gates</h4>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (gate_name, gate_path) <span class="kw">in</span> gate_ids:</span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>  fig <span class="op">=</span> session.plot_gate(group_name <span class="op">=</span> sample_group, </span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>                          sample_id <span class="op">=</span> sample_id, </span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>                          gate_name <span class="op">=</span> gate_name, </span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>                          gate_path <span class="op">=</span> gate_path,</span>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a>                          x_min <span class="op">=</span> <span class="dv">0</span>,</span>
+<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a>                          x_max <span class="op">=</span> <span class="fl">1.2</span>,</span>
+<span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a>                          y_min <span class="op">=</span> <span class="dv">0</span>,</span>
+<span id="cb23-9"><a href="#cb23-9" aria-hidden="true" tabindex="-1"></a>                          y_max <span class="op">=</span> <span class="fl">1.2</span></span>
+<span id="cb23-10"><a href="#cb23-10" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb23-11"><a href="#cb23-11" aria-hidden="true" tabindex="-1"></a>  show(fig)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="interpret-child-gates" class="level4">
+<h4 class="anchored" data-anchor-id="interpret-child-gates">Interpret Child Gates</h4>
+<p>We can see from the plots and from the output of ‘quadrant_gates’ that each of the child gates is a rectangle gate. We also note that the likely intent of each of these gates was to select events with high values, and therefore their max values are irrelevant. We thus focus on their min values when defining the threshold gates below.</p>
+</section>
+</section>
+<section id="create-single-threshold-gates" class="level3">
+<h3 class="anchored" data-anchor-id="create-single-threshold-gates">Create Single Threshold Gates</h3>
+<section id="gather-details-for-each-child-gate" class="level4">
+<h4 class="anchored" data-anchor-id="gather-details-for-each-child-gate">Gather Details for Each Child Gate</h4>
+<p>We loop over the quadrant gates and extract labels, min, max, compensation, and transformations</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="co"># A channel label lookup table to switch back and forth between PnN &amp; PnS labels</span></span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>channel_lut <span class="op">=</span> <span class="bu">dict</span>(<span class="bu">zip</span>(sample.pnn_labels, sample.pns_labels))</span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>gate_dims <span class="op">=</span> []</span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> gate_name, gate <span class="kw">in</span> quadrant_gates.items():</span>
+<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> dim <span class="kw">in</span> gate.dimensions:</span>
+<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a>    gate_dim_dict <span class="op">=</span> {</span>
+<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a>            <span class="st">'gate_name'</span>: gate_name,</span>
+<span id="cb24-10"><a href="#cb24-10" aria-hidden="true" tabindex="-1"></a>            <span class="st">'pnn_label'</span>: dim.<span class="bu">id</span>,</span>
+<span id="cb24-11"><a href="#cb24-11" aria-hidden="true" tabindex="-1"></a>            <span class="st">'pns_label'</span>: channel_lut[dim.<span class="bu">id</span>],</span>
+<span id="cb24-12"><a href="#cb24-12" aria-hidden="true" tabindex="-1"></a>            <span class="st">'min'</span>: dim.<span class="bu">min</span>,</span>
+<span id="cb24-13"><a href="#cb24-13" aria-hidden="true" tabindex="-1"></a>            <span class="st">'max'</span>: dim.<span class="bu">max</span>,</span>
+<span id="cb24-14"><a href="#cb24-14" aria-hidden="true" tabindex="-1"></a>            <span class="st">'comp_ref'</span>: dim.compensation_ref,</span>
+<span id="cb24-15"><a href="#cb24-15" aria-hidden="true" tabindex="-1"></a>            <span class="st">'xform_ref'</span>: dim.transformation_ref</span>
+<span id="cb24-16"><a href="#cb24-16" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb24-17"><a href="#cb24-17" aria-hidden="true" tabindex="-1"></a>  gate_dims.append(gate_dim_dict)</span>
+<span id="cb24-18"><a href="#cb24-18" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb24-19"><a href="#cb24-19" aria-hidden="true" tabindex="-1"></a><span class="co">#Collect list of dictionaries into a Pandas dataframe</span></span>
+<span id="cb24-20"><a href="#cb24-20" aria-hidden="true" tabindex="-1"></a>df_gate_dims <span class="op">=</span> pd.DataFrame(gate_dims)</span>
+<span id="cb24-21"><a href="#cb24-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-22"><a href="#cb24-22" aria-hidden="true" tabindex="-1"></a>df_gate_dims</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  gate_name        pnn_label  ...             comp_ref        xform_ref
+0   CD107a+  CD107a PE FLR-A  ...  Acquisition-defined  CD107a PE FLR-A
+1     IFNg+   IFNg APC FLR-A  ...  Acquisition-defined   IFNg APC FLR-A
+2      IL2+  IL2 BV421 FLR-A  ...  Acquisition-defined  IL2 BV421 FLR-A
+3     TNFa+  TNFa FITC FLR-A  ...  Acquisition-defined  TNFa FITC FLR-A
+
+[4 rows x 7 columns]</code></pre>
+</div>
+</div>
+</section>
+<section id="check-for-identical-compensations-among-gates" class="level4">
+<h4 class="anchored" data-anchor-id="check-for-identical-compensations-among-gates">Check For Identical Compensations Among Gates</h4>
+<p>We verify that a single compensation was used across all gates.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>comp_refs <span class="op">=</span> df_gate_dims[<span class="st">'comp_ref'</span>].unique()</span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="bu">len</span>(comp_refs) <span class="op">&gt;</span> <span class="dv">1</span>:</span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>  <span class="cf">raise</span> <span class="pp">ValueError</span>(<span class="st">"More than one compensation ref found!"</span>)</span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>comp_ref <span class="op">=</span> comp_refs[<span class="dv">0</span>]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="create-threshold-gates" class="level4">
+<h4 class="anchored" data-anchor-id="create-threshold-gates">Create Threshold Gates</h4>
+<p>This step consists of essentially 2 parts:</p>
+<ol type="1">
+<li>If multiple threshold values were defined for a single child channel in FlowJo, find the mean among the min and max values</li>
+</ol>
+<ul>
+<li>Multiple threshold values can be defined when, for example, an analyst creates gates from scatter plots with the same channel multiple times</li>
+</ul>
+<ol start="2" type="1">
+<li>For each child channel, create 2 new threshold gates:</li>
+<li>Positive</li>
+<li>Negative</li>
+</ol>
+<p><strong>Note:</strong> We determined above that the max values for the child rectangle gates are irrelevant, so we create our threshold gates based on the min values.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Define unique channel labels</span></span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>range_pnn_labels <span class="op">=</span> df_gate_dims.pnn_label.unique()</span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a><span class="co"># This will hold the list of gate pairs (neg &amp; pos) for each channel</span></span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a>gate_pairs <span class="op">=</span> []</span>
+<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> label <span class="kw">in</span> range_pnn_labels:</span>
+<span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Get rows for this channel from df_gate_dims</span></span>
+<span id="cb27-9"><a href="#cb27-9" aria-hidden="true" tabindex="-1"></a>  df_label <span class="op">=</span> df_gate_dims[df_gate_dims.pnn_label <span class="op">==</span> label]</span>
+<span id="cb27-10"><a href="#cb27-10" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb27-11"><a href="#cb27-11" aria-hidden="true" tabindex="-1"></a>  <span class="co"># This will hold threshold values</span></span>
+<span id="cb27-12"><a href="#cb27-12" aria-hidden="true" tabindex="-1"></a>  all_values <span class="op">=</span> []</span>
+<span id="cb27-13"><a href="#cb27-13" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Extract just the min values (exclude missing)</span></span>
+<span id="cb27-14"><a href="#cb27-14" aria-hidden="true" tabindex="-1"></a>  all_values.extend(df_label[df_label[<span class="st">'min'</span>].notna()][<span class="st">'min'</span>])</span>
+<span id="cb27-15"><a href="#cb27-15" aria-hidden="true" tabindex="-1"></a>  <span class="co">#all_values.extend(df_label[df_label['max'].notna()]['max'])</span></span>
+<span id="cb27-16"><a href="#cb27-16" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb27-17"><a href="#cb27-17" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Calculate the mean among the min threshold values for this channel</span></span>
+<span id="cb27-18"><a href="#cb27-18" aria-hidden="true" tabindex="-1"></a>  mean_value <span class="op">=</span> np.mean(all_values)</span>
+<span id="cb27-19"><a href="#cb27-19" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb27-20"><a href="#cb27-20" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Extract a channel/marker label from the pnn_label</span></span>
+<span id="cb27-21"><a href="#cb27-21" aria-hidden="true" tabindex="-1"></a>  <span class="co"># pns_label = channel_lut[label] #If we had pns_labels, we would use the lookup table</span></span>
+<span id="cb27-22"><a href="#cb27-22" aria-hidden="true" tabindex="-1"></a>  pns_label <span class="op">=</span> copy.copy(label) <span class="co">#The pns_label is the pnn_label, so just copy the 'label' loop variable</span></span>
+<span id="cb27-23"><a href="#cb27-23" aria-hidden="true" tabindex="-1"></a>  marker_label <span class="op">=</span> pns_label.split()[<span class="dv">0</span>] <span class="co">#Split the label by spaces and extract the first element</span></span>
+<span id="cb27-24"><a href="#cb27-24" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb27-25"><a href="#cb27-25" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Create labels for negative and positive gates</span></span>
+<span id="cb27-26"><a href="#cb27-26" aria-hidden="true" tabindex="-1"></a>  gate_label_neg <span class="op">=</span> parent_gate_name <span class="op">+</span> <span class="st">'_'</span> <span class="op">+</span> marker_label <span class="op">+</span> <span class="st">'-'</span></span>
+<span id="cb27-27"><a href="#cb27-27" aria-hidden="true" tabindex="-1"></a>  gate_label_pos <span class="op">=</span> parent_gate_name <span class="op">+</span> <span class="st">'_'</span> <span class="op">+</span> marker_label <span class="op">+</span> <span class="st">'+'</span></span>
+<span id="cb27-28"><a href="#cb27-28" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Collect the labels in gate_pairs</span></span>
+<span id="cb27-29"><a href="#cb27-29" aria-hidden="true" tabindex="-1"></a>  gate_pairs.append([gate_label_pos, gate_label_neg])</span>
+<span id="cb27-30"><a href="#cb27-30" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb27-31"><a href="#cb27-31" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Define the dimensions</span></span>
+<span id="cb27-32"><a href="#cb27-32" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Negative will be a range gate where max is specified but not min</span></span>
+<span id="cb27-33"><a href="#cb27-33" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Positive will be a range gate where min is specified but not max</span></span>
+<span id="cb27-34"><a href="#cb27-34" aria-hidden="true" tabindex="-1"></a>  <span class="co"># By convention the xform ref in FlowJo is tied to the channel PnN name</span></span>
+<span id="cb27-35"><a href="#cb27-35" aria-hidden="true" tabindex="-1"></a>  dim_neg <span class="op">=</span> fk.Dimension(</span>
+<span id="cb27-36"><a href="#cb27-36" aria-hidden="true" tabindex="-1"></a>      label,</span>
+<span id="cb27-37"><a href="#cb27-37" aria-hidden="true" tabindex="-1"></a>      compensation_ref<span class="op">=</span>comp_ref,</span>
+<span id="cb27-38"><a href="#cb27-38" aria-hidden="true" tabindex="-1"></a>      transformation_ref<span class="op">=</span>label,</span>
+<span id="cb27-39"><a href="#cb27-39" aria-hidden="true" tabindex="-1"></a>      range_min<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb27-40"><a href="#cb27-40" aria-hidden="true" tabindex="-1"></a>      range_max<span class="op">=</span>mean_value</span>
+<span id="cb27-41"><a href="#cb27-41" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb27-42"><a href="#cb27-42" aria-hidden="true" tabindex="-1"></a>  dim_pos <span class="op">=</span> fk.Dimension(</span>
+<span id="cb27-43"><a href="#cb27-43" aria-hidden="true" tabindex="-1"></a>      label,</span>
+<span id="cb27-44"><a href="#cb27-44" aria-hidden="true" tabindex="-1"></a>      compensation_ref<span class="op">=</span>comp_ref,</span>
+<span id="cb27-45"><a href="#cb27-45" aria-hidden="true" tabindex="-1"></a>      transformation_ref<span class="op">=</span>label,</span>
+<span id="cb27-46"><a href="#cb27-46" aria-hidden="true" tabindex="-1"></a>      range_min<span class="op">=</span>mean_value,</span>
+<span id="cb27-47"><a href="#cb27-47" aria-hidden="true" tabindex="-1"></a>      range_max<span class="op">=</span><span class="va">None</span></span>
+<span id="cb27-48"><a href="#cb27-48" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb27-49"><a href="#cb27-49" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb27-50"><a href="#cb27-50" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Create the threshold gates using the dimensions defined above</span></span>
+<span id="cb27-51"><a href="#cb27-51" aria-hidden="true" tabindex="-1"></a>  gate_neg <span class="op">=</span> fk.gates.RectangleGate(</span>
+<span id="cb27-52"><a href="#cb27-52" aria-hidden="true" tabindex="-1"></a>      gate_label_neg,</span>
+<span id="cb27-53"><a href="#cb27-53" aria-hidden="true" tabindex="-1"></a>      parent_gate_name,</span>
+<span id="cb27-54"><a href="#cb27-54" aria-hidden="true" tabindex="-1"></a>      dimensions<span class="op">=</span>[dim_neg]</span>
+<span id="cb27-55"><a href="#cb27-55" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb27-56"><a href="#cb27-56" aria-hidden="true" tabindex="-1"></a>  gate_pos <span class="op">=</span> fk.gates.RectangleGate(</span>
+<span id="cb27-57"><a href="#cb27-57" aria-hidden="true" tabindex="-1"></a>      gate_label_pos,</span>
+<span id="cb27-58"><a href="#cb27-58" aria-hidden="true" tabindex="-1"></a>      parent_gate_name,</span>
+<span id="cb27-59"><a href="#cb27-59" aria-hidden="true" tabindex="-1"></a>      dimensions<span class="op">=</span>[dim_pos]</span>
+<span id="cb27-60"><a href="#cb27-60" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb27-61"><a href="#cb27-61" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb27-62"><a href="#cb27-62" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Add the gates to the session</span></span>
+<span id="cb27-63"><a href="#cb27-63" aria-hidden="true" tabindex="-1"></a>  session.add_gate(gate_neg, group_name<span class="op">=</span>sample_group)</span>
+<span id="cb27-64"><a href="#cb27-64" aria-hidden="true" tabindex="-1"></a>  session.add_gate(gate_pos, group_name<span class="op">=</span>sample_group)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+</section>
+<section id="create-boolean-gates" class="level3">
+<h3 class="anchored" data-anchor-id="create-boolean-gates">Create Boolean Gates</h3>
+<section id="generate-index-permutations" class="level4">
+<h4 class="anchored" data-anchor-id="generate-index-permutations">Generate Index Permutations</h4>
+<p>Derive all possible permutations with repetition with 2 possible values (+ and -) for the number of child gates. This defines the number of mutually exclusive cell subsets using all possible combinations of these child gates.</p>
+<p>In this example, since we have 4 child gates, there are <span class="math inline">\(2^4 = 16\)</span> possible mutually-exclusive cell subsets.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Find the number of unique channels</span></span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>n_channels <span class="op">=</span> <span class="bu">len</span>(gate_pairs)</span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Derive the permutations using 0 and 1 for + and -</span></span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a>idx_combos <span class="op">=</span> itertools.product([<span class="dv">0</span>, <span class="dv">1</span>], repeat<span class="op">=</span>n_channels)</span>
+<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-6"><a href="#cb28-6" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="bu">list</span>(gate_pairs))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[['CD4+_CD107a+', 'CD4+_CD107a-'], ['CD4+_IFNg+', 'CD4+_IFNg-'], ['CD4+_IL2+', 'CD4+_IL2-'], ['CD4+_TNFa+', 'CD4+_TNFa-']]</code></pre>
+</div>
+</div>
+</section>
+<section id="convert-index-permutations-to-threshold-gate-permutations" class="level4">
+<h4 class="anchored" data-anchor-id="convert-index-permutations-to-threshold-gate-permutations">Convert Index Permutations to Threshold Gate Permutations</h4>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="co"># This will hold the set of gate names for each one of our divisions</span></span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>bool_gate_name_combos <span class="op">=</span> []</span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Loop over each permutation</span></span>
+<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> ic <span class="kw">in</span> idx_combos:</span>
+<span id="cb30-6"><a href="#cb30-6" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb30-7"><a href="#cb30-7" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Enumerate over the permutation and extract the corresponding threshold gate</span></span>
+<span id="cb30-8"><a href="#cb30-8" aria-hidden="true" tabindex="-1"></a>  bool_gate_name_combos.append(</span>
+<span id="cb30-9"><a href="#cb30-9" aria-hidden="true" tabindex="-1"></a>    <span class="co"># i indexes the threshold gates in gate_pairs</span></span>
+<span id="cb30-10"><a href="#cb30-10" aria-hidden="true" tabindex="-1"></a>    <span class="co"># idx indexes + or - versions of each threshold gate</span></span>
+<span id="cb30-11"><a href="#cb30-11" aria-hidden="true" tabindex="-1"></a>    [gate_pairs[i][idx] <span class="cf">for</span> i, idx <span class="kw">in</span> <span class="bu">enumerate</span>(ic)]</span>
+<span id="cb30-12"><a href="#cb30-12" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="create-the-boolean-gates" class="level4">
+<h4 class="anchored" data-anchor-id="create-the-boolean-gates">Create the Boolean Gates</h4>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="co"># This will hold the boolean gate unique IDs</span></span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>bool_gate_ids <span class="op">=</span> []</span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> gate_name_combos <span class="kw">in</span> bool_gate_name_combos:</span>
+<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Collapse the gate permutations into a single comma-sep gate ID</span></span>
+<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a>  bool_gate_id <span class="op">=</span> <span class="st">","</span>.join(gate_name_combos)</span>
+<span id="cb31-7"><a href="#cb31-7" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Append the gate IDs</span></span>
+<span id="cb31-8"><a href="#cb31-8" aria-hidden="true" tabindex="-1"></a>  bool_gate_ids.append(bool_gate_id)</span>
+<span id="cb31-9"><a href="#cb31-9" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb31-10"><a href="#cb31-10" aria-hidden="true" tabindex="-1"></a>  <span class="co"># This will hold the boolean gate references (name, path, complement)</span></span>
+<span id="cb31-11"><a href="#cb31-11" aria-hidden="true" tabindex="-1"></a>  gate_refs <span class="op">=</span> []</span>
+<span id="cb31-12"><a href="#cb31-12" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb31-13"><a href="#cb31-13" aria-hidden="true" tabindex="-1"></a>  <span class="co"># For each boolean gate, define the reference</span></span>
+<span id="cb31-14"><a href="#cb31-14" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> gate_name <span class="kw">in</span> gate_name_combos:</span>
+<span id="cb31-15"><a href="#cb31-15" aria-hidden="true" tabindex="-1"></a>    gate_ref <span class="op">=</span> {</span>
+<span id="cb31-16"><a href="#cb31-16" aria-hidden="true" tabindex="-1"></a>      <span class="st">'ref'</span>: gate_name,</span>
+<span id="cb31-17"><a href="#cb31-17" aria-hidden="true" tabindex="-1"></a>      <span class="st">'path'</span>: parent_gate_path,</span>
+<span id="cb31-18"><a href="#cb31-18" aria-hidden="true" tabindex="-1"></a>      <span class="st">'complement'</span>: <span class="va">False</span></span>
+<span id="cb31-19"><a href="#cb31-19" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb31-20"><a href="#cb31-20" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Append the gate references</span></span>
+<span id="cb31-21"><a href="#cb31-21" aria-hidden="true" tabindex="-1"></a>    gate_refs.append(gate_ref)</span>
+<span id="cb31-22"><a href="#cb31-22" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb31-23"><a href="#cb31-23" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Define the boolean gate</span></span>
+<span id="cb31-24"><a href="#cb31-24" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Note that we define the parent of the boolean gates as the parent of their component gates, but this is not strictly necessary</span></span>
+<span id="cb31-25"><a href="#cb31-25" aria-hidden="true" tabindex="-1"></a>  bool_gate <span class="op">=</span> fk.gates.BooleanGate(</span>
+<span id="cb31-26"><a href="#cb31-26" aria-hidden="true" tabindex="-1"></a>      bool_gate_id, <span class="co">#Assign a unique gate name</span></span>
+<span id="cb31-27"><a href="#cb31-27" aria-hidden="true" tabindex="-1"></a>      parent_gate_name, <span class="co">#Assigning the parent for this boolean gate</span></span>
+<span id="cb31-28"><a href="#cb31-28" aria-hidden="true" tabindex="-1"></a>      <span class="st">'and'</span>, <span class="co">#Apply 'and' operation to all gate_refs</span></span>
+<span id="cb31-29"><a href="#cb31-29" aria-hidden="true" tabindex="-1"></a>      gate_refs <span class="co">#The reference</span></span>
+<span id="cb31-30"><a href="#cb31-30" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb31-31"><a href="#cb31-31" aria-hidden="true" tabindex="-1"></a>   </span>
+<span id="cb31-32"><a href="#cb31-32" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Add the boolean gate to the session </span></span>
+<span id="cb31-33"><a href="#cb31-33" aria-hidden="true" tabindex="-1"></a>  session.add_gate(bool_gate, group_name <span class="op">=</span> sample_group)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="visualize-the-new-boolean-gates-in-the-gating-hierarchy" class="level4">
+<h4 class="anchored" data-anchor-id="visualize-the-new-boolean-gates-in-the-gating-hierarchy">Visualize the New Boolean Gates in the Gating Hierarchy</h4>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb32"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(session.get_gate_hierarchy(sample_group))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>root
+╰── Time
+    ╰── Singlets
+        ╰── aAmine-
+            ╰── CD3+
+                ├── CD4+
+                │   ├── CD107a+
+                │   ├── IFNg+
+                │   ├── IL2+
+                │   ├── TNFa+
+                │   ├── CD4+_CD107a-
+                │   ├── CD4+_CD107a+
+                │   ├── CD4+_IFNg-
+                │   ├── CD4+_IFNg+
+                │   ├── CD4+_IL2-
+                │   ├── CD4+_IL2+
+                │   ├── CD4+_TNFa-
+                │   ├── CD4+_TNFa+
+                │   ├── CD4+_CD107a+,CD4+_IFNg+,CD4+_IL2+,CD4+_TNFa+
+                │   ├── CD4+_CD107a+,CD4+_IFNg+,CD4+_IL2+,CD4+_TNFa-
+                │   ├── CD4+_CD107a+,CD4+_IFNg+,CD4+_IL2-,CD4+_TNFa+
+                │   ├── CD4+_CD107a+,CD4+_IFNg+,CD4+_IL2-,CD4+_TNFa-
+                │   ├── CD4+_CD107a+,CD4+_IFNg-,CD4+_IL2+,CD4+_TNFa+
+                │   ├── CD4+_CD107a+,CD4+_IFNg-,CD4+_IL2+,CD4+_TNFa-
+                │   ├── CD4+_CD107a+,CD4+_IFNg-,CD4+_IL2-,CD4+_TNFa+
+                │   ├── CD4+_CD107a+,CD4+_IFNg-,CD4+_IL2-,CD4+_TNFa-
+                │   ├── CD4+_CD107a-,CD4+_IFNg+,CD4+_IL2+,CD4+_TNFa+
+                │   ├── CD4+_CD107a-,CD4+_IFNg+,CD4+_IL2+,CD4+_TNFa-
+                │   ├── CD4+_CD107a-,CD4+_IFNg+,CD4+_IL2-,CD4+_TNFa+
+                │   ├── CD4+_CD107a-,CD4+_IFNg+,CD4+_IL2-,CD4+_TNFa-
+                │   ├── CD4+_CD107a-,CD4+_IFNg-,CD4+_IL2+,CD4+_TNFa+
+                │   ├── CD4+_CD107a-,CD4+_IFNg-,CD4+_IL2+,CD4+_TNFa-
+                │   ├── CD4+_CD107a-,CD4+_IFNg-,CD4+_IL2-,CD4+_TNFa+
+                │   ╰── CD4+_CD107a-,CD4+_IFNg-,CD4+_IL2-,CD4+_TNFa-
+                ╰── CD8+
+                    ├── CD107a+
+                    ├── IFNg+
+                    ├── IL2+
+                    ╰── TNFa+</code></pre>
+</div>
+</div>
+<p>We can now see that we have added two sets of gates to our gating hierarchy:</p>
+<ol type="1">
+<li><ul>
+<li>and - threshold gates for each child channel</li>
+</ul></li>
+</ol>
+<ul>
+<li>Recall that we used the mean cutoff value from the rectangle gates imported from FlowJo</li>
+</ul>
+<ol start="2" type="1">
+<li>Boolean gates for all possible permutations of the child gates</li>
+</ol>
+<ul>
+<li>These define mutually-exclusive subsets within CD4+ events</li>
+</ul>
+<p>Note that while we chose a single sample from the sample group to derive these boolean gates, because all samples in a group have identical gating hierarchy, they will be valid for all samples.</p>
+</section>
+</section>
+<section id="calculate-counts-for-each-cell-subset" class="level3">
+<h3 class="anchored" data-anchor-id="calculate-counts-for-each-cell-subset">Calculate Counts for Each Cell Subset</h3>
+<section id="re-analyze-samples" class="level4">
+<h4 class="anchored" data-anchor-id="re-analyze-samples">Re-Analyze Samples</h4>
+<p>We need to re-analyze because we added new gates</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb34"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>session.analyze_samples(sample_group, verbose <span class="op">=</span> <span class="va">False</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="generate-sample-group-report" class="level4">
+<h4 class="anchored" data-anchor-id="generate-sample-group-report">Generate Sample Group Report</h4>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb35"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>group_report <span class="op">=</span> session.get_group_report(sample_group)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Display the report for just the boolean gates</p>
+</section>
+<section id="show-report-for-each-sample-in-sample-group" class="level4">
+<h4 class="anchored" data-anchor-id="show-report-for-each-sample-in-sample-group">Show Report for Each Sample in Sample Group</h4>
+<p><strong>Notes:</strong></p>
+<ul>
+<li>The ‘relative_percent’ column gives the percentage of events in a category relative to the total number of events in the parent gate (in this case CD4+)</li>
+<li>The ‘absolute_percent’ column gives the percentage of events in a category relative to the total number of events in the entire dataset.</li>
+</ul>
+<p>First, define a function to show a slice of the full report for the sample of interest.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb36"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> sample_report(sample_name):</span>
+<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a>  sample_report <span class="op">=</span> group_report.loc[(group_report[<span class="st">'gate_type'</span>] <span class="op">==</span> <span class="st">'BooleanGate'</span>) <span class="op">&amp;</span> (group_report[<span class="st">'parent'</span>] <span class="op">==</span> parent_gate_name) <span class="op">&amp;</span> (group_report[<span class="st">'sample'</span>] <span class="op">==</span> sample_name),</span>
+<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a>                   (<span class="st">'gate_name'</span>, <span class="st">'count'</span>, <span class="st">'relative_percent'</span>, <span class="st">'absolute_percent'</span>)]</span>
+<span id="cb36-4"><a href="#cb36-4" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span>(sample_report)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code>&lt;IPython.core.display.Markdown object&gt;</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb38"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a>sample_report(sample_list[<span class="dv">0</span>])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>                                       gate_name  ...  absolute_percent
+30  CD4+_CD107a+,CD4+_IFNg+,CD4+_IL2+,CD4+_TNFa+  ...          0.000352
+22  CD4+_CD107a+,CD4+_IFNg+,CD4+_IL2+,CD4+_TNFa-  ...          0.000000
+31  CD4+_CD107a+,CD4+_IFNg+,CD4+_IL2-,CD4+_TNFa+  ...          0.001761
+23  CD4+_CD107a+,CD4+_IFNg+,CD4+_IL2-,CD4+_TNFa-  ...          0.000000
+32  CD4+_CD107a+,CD4+_IFNg-,CD4+_IL2+,CD4+_TNFa+  ...          0.000000
+24  CD4+_CD107a+,CD4+_IFNg-,CD4+_IL2+,CD4+_TNFa-  ...          0.000000
+33  CD4+_CD107a+,CD4+_IFNg-,CD4+_IL2-,CD4+_TNFa+  ...          0.000352
+25  CD4+_CD107a+,CD4+_IFNg-,CD4+_IL2-,CD4+_TNFa-  ...          0.018312
+34  CD4+_CD107a-,CD4+_IFNg+,CD4+_IL2+,CD4+_TNFa+  ...          0.017960
+26  CD4+_CD107a-,CD4+_IFNg+,CD4+_IL2+,CD4+_TNFa-  ...          0.000704
+35  CD4+_CD107a-,CD4+_IFNg+,CD4+_IL2-,CD4+_TNFa+  ...          0.062683
+27  CD4+_CD107a-,CD4+_IFNg+,CD4+_IL2-,CD4+_TNFa-  ...          0.127127
+36  CD4+_CD107a-,CD4+_IFNg-,CD4+_IL2+,CD4+_TNFa+  ...          0.001761
+28  CD4+_CD107a-,CD4+_IFNg-,CD4+_IL2+,CD4+_TNFa-  ...          0.001761
+37  CD4+_CD107a-,CD4+_IFNg-,CD4+_IL2-,CD4+_TNFa+  ...          0.016551
+29  CD4+_CD107a-,CD4+_IFNg-,CD4+_IL2-,CD4+_TNFa-  ...         28.576007
+
+[16 rows x 4 columns]</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code>&lt;IPython.core.display.Markdown object&gt;</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb41"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a>sample_report(sample_list[<span class="dv">1</span>])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>                                       gate_name  ...  absolute_percent
+30  CD4+_CD107a+,CD4+_IFNg+,CD4+_IL2+,CD4+_TNFa+  ...          0.000000
+22  CD4+_CD107a+,CD4+_IFNg+,CD4+_IL2+,CD4+_TNFa-  ...          0.000000
+31  CD4+_CD107a+,CD4+_IFNg+,CD4+_IL2-,CD4+_TNFa+  ...          0.000000
+23  CD4+_CD107a+,CD4+_IFNg+,CD4+_IL2-,CD4+_TNFa-  ...          0.000000
+32  CD4+_CD107a+,CD4+_IFNg-,CD4+_IL2+,CD4+_TNFa+  ...          0.000000
+24  CD4+_CD107a+,CD4+_IFNg-,CD4+_IL2+,CD4+_TNFa-  ...          0.000000
+33  CD4+_CD107a+,CD4+_IFNg-,CD4+_IL2-,CD4+_TNFa+  ...          0.000000
+25  CD4+_CD107a+,CD4+_IFNg-,CD4+_IL2-,CD4+_TNFa-  ...          0.024536
+34  CD4+_CD107a-,CD4+_IFNg+,CD4+_IL2+,CD4+_TNFa+  ...          0.000000
+26  CD4+_CD107a-,CD4+_IFNg+,CD4+_IL2+,CD4+_TNFa-  ...          0.000000
+35  CD4+_CD107a-,CD4+_IFNg+,CD4+_IL2-,CD4+_TNFa+  ...          0.001052
+27  CD4+_CD107a-,CD4+_IFNg+,CD4+_IL2-,CD4+_TNFa-  ...          0.002103
+36  CD4+_CD107a-,CD4+_IFNg-,CD4+_IL2+,CD4+_TNFa+  ...          0.000701
+28  CD4+_CD107a-,CD4+_IFNg-,CD4+_IL2+,CD4+_TNFa-  ...          0.002103
+37  CD4+_CD107a-,CD4+_IFNg-,CD4+_IL2-,CD4+_TNFa+  ...          0.008062
+29  CD4+_CD107a-,CD4+_IFNg-,CD4+_IL2-,CD4+_TNFa-  ...         28.400925
+
+[16 rows x 4 columns]</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code>&lt;IPython.core.display.Markdown object&gt;</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb44"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a>sample_report(sample_list[<span class="dv">2</span>])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>                                       gate_name  ...  absolute_percent
+30  CD4+_CD107a+,CD4+_IFNg+,CD4+_IL2+,CD4+_TNFa+  ...          0.000000
+22  CD4+_CD107a+,CD4+_IFNg+,CD4+_IL2+,CD4+_TNFa-  ...          0.000000
+31  CD4+_CD107a+,CD4+_IFNg+,CD4+_IL2-,CD4+_TNFa+  ...          0.000000
+23  CD4+_CD107a+,CD4+_IFNg+,CD4+_IL2-,CD4+_TNFa-  ...          0.000000
+32  CD4+_CD107a+,CD4+_IFNg-,CD4+_IL2+,CD4+_TNFa+  ...          0.000000
+24  CD4+_CD107a+,CD4+_IFNg-,CD4+_IL2+,CD4+_TNFa-  ...          0.000000
+33  CD4+_CD107a+,CD4+_IFNg-,CD4+_IL2-,CD4+_TNFa+  ...          0.000000
+25  CD4+_CD107a+,CD4+_IFNg-,CD4+_IL2-,CD4+_TNFa-  ...          0.023434
+34  CD4+_CD107a-,CD4+_IFNg+,CD4+_IL2+,CD4+_TNFa+  ...          0.000000
+26  CD4+_CD107a-,CD4+_IFNg+,CD4+_IL2+,CD4+_TNFa-  ...          0.000000
+35  CD4+_CD107a-,CD4+_IFNg+,CD4+_IL2-,CD4+_TNFa+  ...          0.001378
+27  CD4+_CD107a-,CD4+_IFNg+,CD4+_IL2-,CD4+_TNFa-  ...          0.000000
+36  CD4+_CD107a-,CD4+_IFNg-,CD4+_IL2+,CD4+_TNFa+  ...          0.000345
+28  CD4+_CD107a-,CD4+_IFNg-,CD4+_IL2+,CD4+_TNFa-  ...          0.001723
+37  CD4+_CD107a-,CD4+_IFNg-,CD4+_IL2-,CD4+_TNFa+  ...          0.005514
+29  CD4+_CD107a-,CD4+_IFNg-,CD4+_IL2-,CD4+_TNFa-  ...         28.393505
+
+[16 rows x 4 columns]</code></pre>
+</div>
+</div>
+</section>
+<section id="extract-counts-for-samples-of-interest" class="level4">
+<h4 class="anchored" data-anchor-id="extract-counts-for-samples-of-interest">Extract Counts for Samples of Interest</h4>
+<p>COMPASS needs input samples to be paired observations of the same biological sample under two different experimental conditions (ie. stimulated vs unstimulated). For this dataset, the sample name with ‘E01’ is unstimulated and the sample name with ‘E03’ is stimulated with cytomegalovirus (CMV). We will save the reports with cell proportions for just those two samples.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb46"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a>counts_CMV <span class="op">=</span> sample_report(sample_list[<span class="dv">0</span>])</span>
+<span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a>counts_HIV <span class="op">=</span> sample_report(sample_list[<span class="dv">1</span>])</span>
+<span id="cb46-3"><a href="#cb46-3" aria-hidden="true" tabindex="-1"></a>counts_unstim <span class="op">=</span> sample_report(sample_list[<span class="dv">2</span>])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+</section>
+<section id="extract-events-for-each-population" class="level3">
+<h3 class="anchored" data-anchor-id="extract-events-for-each-population">Extract Events for Each Population</h3>
+<p><strong>Note:</strong> We may not need this data according to Lynn in a meeting, but the <a href="https://www.bioconductor.org/packages/devel/bioc/vignettes/COMPASS/inst/doc/COMPASS.html">COMPASS vignette</a> shows that we do.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb47"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a><span class="co"># for group_report:</span></span>
+<span id="cb47-2"><a href="#cb47-2" aria-hidden="true" tabindex="-1"></a><span class="co"># session.get_wsp_gated_events(group_name = sample_group,</span></span>
+<span id="cb47-3"><a href="#cb47-3" aria-hidden="true" tabindex="-1"></a><span class="co">#                              sample_ids = sample_list,</span></span>
+<span id="cb47-4"><a href="#cb47-4" aria-hidden="true" tabindex="-1"></a><span class="co">#                              gate_name = ,</span></span>
+<span id="cb47-5"><a href="#cb47-5" aria-hidden="true" tabindex="-1"></a><span class="co">#                              gate_path =</span></span>
+<span id="cb47-6"><a href="#cb47-6" aria-hidden="true" tabindex="-1"></a><span class="co">#                             )</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+</section>
+<section id="running-compass" class="level2">
+<h2 class="anchored" data-anchor-id="running-compass">Running COMPASS</h2>
+<section id="brief-background-of-compass" class="level3">
+<h3 class="anchored" data-anchor-id="brief-background-of-compass">Brief Background of COMPASS</h3>
+<p>COMPASS is a tool that uses mixture models.</p>
+<p>Provides two summary outputs for each subject/individual:</p>
+<ol type="1">
+<li>The functionality score (FS): Defined as the proportion of antigen-specific subsets detected among all possible ones</li>
+<li>The polyfunctionality score (PFS) is similar, but it weighs the different subsets by their degree of functionality, naturally favoring subsets with higher degrees of functionality, motivated by the observations that a higher-degree function has been correlated with good outcomes in certain vaccine studies</li>
+</ol>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb48"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(reticulate); <span class="fu">library</span>(COMPASS); <span class="fu">library</span>(tidyverse); <span class="fu">library</span>(readxl)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in system("timedatectl", intern = TRUE): running command 'timedatectl'
+had status 1</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>── Attaching packages ─────────────────────────────────────── tidyverse 1.3.1 ──</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>✔ ggplot2 3.3.6     ✔ purrr   0.3.4
+✔ tibble  3.1.7     ✔ dplyr   1.0.9
+✔ tidyr   1.2.0     ✔ stringr 1.4.0
+✔ readr   2.1.2     ✔ forcats 0.5.1</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
+✖ dplyr::filter() masks stats::filter()
+✖ dplyr::lag()    masks stats::lag()</code></pre>
+</div>
+</div>
+</section>
+<section id="data-setup" class="level3">
+<h3 class="anchored" data-anchor-id="data-setup">Data Setup</h3>
+<section id="transfer-count-data-from-python" class="level4">
+<h4 class="anchored" data-anchor-id="transfer-count-data-from-python">Transfer Count Data from Python</h4>
+<p>We can transfer the counts objects from the Python environment to the R environment easily using the syntax ‘py$’</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb53"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb53-1"><a href="#cb53-1" aria-hidden="true" tabindex="-1"></a>counts.unstim <span class="ot">&lt;-</span> py<span class="sc">$</span>counts_unstim</span>
+<span id="cb53-2"><a href="#cb53-2" aria-hidden="true" tabindex="-1"></a>counts.CMV <span class="ot">&lt;-</span> py<span class="sc">$</span>counts_CMV</span>
+<span id="cb53-3"><a href="#cb53-3" aria-hidden="true" tabindex="-1"></a>counts.HIV <span class="ot">&lt;-</span> py<span class="sc">$</span>counts_HIV</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="create-data-matrices" class="level4">
+<h4 class="anchored" data-anchor-id="create-data-matrices">Create Data Matrices</h4>
+<p>We create a matrix for CMV- and HIV-stimulated samples, and for the unstimulated sample by transposing the counts vectors.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb54"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb54-1"><a href="#cb54-1" aria-hidden="true" tabindex="-1"></a>mat.unstim <span class="ot">&lt;-</span> <span class="fu">as.matrix</span>(</span>
+<span id="cb54-2"><a href="#cb54-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">t</span>(counts.unstim<span class="sc">$</span>count)</span>
+<span id="cb54-3"><a href="#cb54-3" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb54-4"><a href="#cb54-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb54-5"><a href="#cb54-5" aria-hidden="true" tabindex="-1"></a>mat.CMV <span class="ot">&lt;-</span> <span class="fu">as.matrix</span>(</span>
+<span id="cb54-6"><a href="#cb54-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">t</span>(counts.CMV<span class="sc">$</span>count)</span>
+<span id="cb54-7"><a href="#cb54-7" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb54-8"><a href="#cb54-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb54-9"><a href="#cb54-9" aria-hidden="true" tabindex="-1"></a>mat.HIV <span class="ot">&lt;-</span> <span class="fu">as.matrix</span>(</span>
+<span id="cb54-10"><a href="#cb54-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">t</span>(counts.HIV<span class="sc">$</span>count)</span>
+<span id="cb54-11"><a href="#cb54-11" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Next, we assign the unique gate names to the columns of each matrix. We remove the ’CD4+_’ prefix and any commas in accordance with the requirements of COMPASS.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb55"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb55-1"><a href="#cb55-1" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(mat.unstim) <span class="ot">&lt;-</span> <span class="fu">gsub</span>(<span class="st">','</span>, <span class="st">''</span>, <span class="fu">gsub</span>(<span class="st">'CD4</span><span class="sc">\\</span><span class="st">+_'</span>, <span class="st">''</span>, counts.unstim<span class="sc">$</span>gate_name))</span>
+<span id="cb55-2"><a href="#cb55-2" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(mat.CMV) <span class="ot">&lt;-</span> <span class="fu">gsub</span>(<span class="st">','</span>, <span class="st">''</span>, <span class="fu">gsub</span>(<span class="st">'CD4</span><span class="sc">\\</span><span class="st">+_'</span>, <span class="st">''</span>, counts.CMV<span class="sc">$</span>gate_name))</span>
+<span id="cb55-3"><a href="#cb55-3" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(mat.HIV) <span class="ot">&lt;-</span> <span class="fu">gsub</span>(<span class="st">','</span>, <span class="st">''</span>, <span class="fu">gsub</span>(<span class="st">'CD4</span><span class="sc">\\</span><span class="st">+_'</span>, <span class="st">''</span>, counts.HIV<span class="sc">$</span>gate_name))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="create-metadata" class="level4">
+<h4 class="anchored" data-anchor-id="create-metadata">Create Metadata</h4>
+<p>The metadata should include unique sample IDs and any other relevant information.</p>
+<p><strong>Note:</strong> Our dataset is somewhat unconventional in that we have two stimulation conditions and an unstimulated control for our single sample. In addition, COMPASS requires at least 2 comparisons of stimulated vs control. Therefore, for the purposes of this vignette, we will consider the CMV-stimulated and the HIV-stimulated replicates as two samples even though they originate from the same biological sample.</p>
+<p>We first need to prepare the sample IDs using the raw FCS file names from the Python object ‘sample_list’. We parse these file names using ’_’ and extract the relevant terms for these samples. We then append a count to each of these to make them unique.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb56"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb56-1"><a href="#cb56-1" aria-hidden="true" tabindex="-1"></a>sample.ids <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(py<span class="sc">$</span>sample_list) <span class="sc">%&gt;%</span></span>
+<span id="cb56-2"><a href="#cb56-2" aria-hidden="true" tabindex="-1"></a>  tidyr<span class="sc">::</span><span class="fu">separate</span>(<span class="at">sep =</span> <span class="st">"_"</span>, <span class="at">col =</span> <span class="st">"py$sample_list"</span>, <span class="at">into =</span> <span class="fu">c</span>(<span class="cn">NA</span>, <span class="st">"sample"</span>, <span class="cn">NA</span>, <span class="cn">NA</span>, <span class="cn">NA</span>, <span class="cn">NA</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb56-3"><a href="#cb56-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">deframe</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb56-4"><a href="#cb56-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">paste</span>(<span class="fu">c</span>(<span class="st">"1"</span>, <span class="st">"2"</span>, <span class="st">"3"</span>), <span class="at">sep =</span> <span class="st">"_"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Now we can make the metadata object with the unique sample IDs, an indicator variable for stimulated vs unstimulated, and a variable indicating the type of stimulation.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb57"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb57-1"><a href="#cb57-1" aria-hidden="true" tabindex="-1"></a>metadata <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb57-2"><a href="#cb57-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">unique_id =</span> sample.ids,</span>
+<span id="cb57-3"><a href="#cb57-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">Stimulation =</span> <span class="fu">c</span>(<span class="st">"unstim"</span>, <span class="st">"stim"</span>, <span class="st">"stim"</span>),</span>
+<span id="cb57-4"><a href="#cb57-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">Group =</span> <span class="fu">c</span>(<span class="st">"unstim"</span>, <span class="st">"CMV"</span>, <span class="st">"HIV"</span>)</span>
+<span id="cb57-5"><a href="#cb57-5" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="combine-cmv-and-hiv" class="level4">
+<h4 class="anchored" data-anchor-id="combine-cmv-and-hiv">Combine CMV and HIV</h4>
+<p>As noted above, we treat the CMV-stimulated and HIV-stimulated replicates for this single sample as two samples for this analysis. In order to do so, we need to combine the CMV and HIV count matrices row-wise into a single matrix. We also create an unstimulated matrix by repeating the single vector of unstimulated counts twice row-wise into a matrix. While unconventional, this will provide CMV-stimulated vs unstimulated and HIV-stimulated vs unstimulated comparisons.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb58"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb58-1"><a href="#cb58-1" aria-hidden="true" tabindex="-1"></a>mat.stim <span class="ot">&lt;-</span> <span class="fu">rbind</span>(mat.CMV, mat.HIV)</span>
+<span id="cb58-2"><a href="#cb58-2" aria-hidden="true" tabindex="-1"></a>mat.unstim <span class="ot">&lt;-</span> <span class="fu">rbind</span>(mat.unstim[<span class="dv">1</span>,], mat.unstim[<span class="dv">1</span>,])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="assign-rownames" class="level4">
+<h4 class="anchored" data-anchor-id="assign-rownames">Assign Rownames</h4>
+<p>The rownames of both count matrices need to match the “unique_id” column of the metadata dataframe, so we assign them accordingly.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb59"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb59-1"><a href="#cb59-1" aria-hidden="true" tabindex="-1"></a><span class="fu">rownames</span>(mat.stim) <span class="ot">&lt;-</span> metadata<span class="sc">$</span>unique_id[metadata<span class="sc">$</span>Group <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"CMV"</span>, <span class="st">"HIV"</span>)]</span>
+<span id="cb59-2"><a href="#cb59-2" aria-hidden="true" tabindex="-1"></a><span class="fu">rownames</span>(mat.unstim) <span class="ot">&lt;-</span> metadata<span class="sc">$</span>unique_id[metadata<span class="sc">$</span>Group <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"CMV"</span>, <span class="st">"HIV"</span>)]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="subset-metadata" class="level4">
+<h4 class="anchored" data-anchor-id="subset-metadata">Subset Metadata</h4>
+<p>The number of rows in the metadata object need to match the number of rows in each count matrix. We therefore subset to include only the stimulated samples.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb60"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb60-1"><a href="#cb60-1" aria-hidden="true" tabindex="-1"></a>metadata <span class="ot">&lt;-</span> metadata[metadata<span class="sc">$</span>Group <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"CMV"</span>, <span class="st">"HIV"</span>) ,]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="reformat-cell-subset-names" class="level4">
+<h4 class="anchored" data-anchor-id="reformat-cell-subset-names">Reformat Cell Subset Names</h4>
+<p>Above we assigned the column names of each data matrix as the unique gating hierarchy/combination for each cell subset where a ‘+’ indicates the marker is expressed and ‘-’ indicates that it is not. COMPASS requires these strings to be in a specific format, and contains a function to parse an existing string into the proper format that it expects. Notably, ‘-’ is converted into the ‘not’ operator !.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb61"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb61-1"><a href="#cb61-1" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(mat.stim) <span class="ot">&lt;-</span> COMPASS<span class="sc">:::</span><span class="fu">translate_marker_names</span>(<span class="fu">colnames</span>(mat.stim))</span>
+<span id="cb61-2"><a href="#cb61-2" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(mat.unstim) <span class="ot">&lt;-</span> COMPASS<span class="sc">:::</span><span class="fu">translate_marker_names</span>(<span class="fu">colnames</span>(mat.unstim))</span>
+<span id="cb61-3"><a href="#cb61-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb61-4"><a href="#cb61-4" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(mat.stim)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code> [1] "CD107a&amp;IFNg&amp;IL2&amp;TNFa"     "CD107a&amp;IFNg&amp;IL2&amp;!TNFa"   
+ [3] "CD107a&amp;IFNg&amp;!IL2&amp;TNFa"    "CD107a&amp;IFNg&amp;!IL2&amp;!TNFa"  
+ [5] "CD107a&amp;!IFNg&amp;IL2&amp;TNFa"    "CD107a&amp;!IFNg&amp;IL2&amp;!TNFa"  
+ [7] "CD107a&amp;!IFNg&amp;!IL2&amp;TNFa"   "CD107a&amp;!IFNg&amp;!IL2&amp;!TNFa" 
+ [9] "!CD107a&amp;IFNg&amp;IL2&amp;TNFa"    "!CD107a&amp;IFNg&amp;IL2&amp;!TNFa"  
+[11] "!CD107a&amp;IFNg&amp;!IL2&amp;TNFa"   "!CD107a&amp;IFNg&amp;!IL2&amp;!TNFa" 
+[13] "!CD107a&amp;!IFNg&amp;IL2&amp;TNFa"   "!CD107a&amp;!IFNg&amp;IL2&amp;!TNFa" 
+[15] "!CD107a&amp;!IFNg&amp;!IL2&amp;TNFa"  "!CD107a&amp;!IFNg&amp;!IL2&amp;!TNFa"</code></pre>
+</div>
+</div>
+</section>
+<section id="checks" class="level4">
+<h4 class="anchored" data-anchor-id="checks">Checks</h4>
+<p><strong>Important:</strong> COMPASS requires that the final column of each count matrix is the cell subset in which all markers are ‘-’. Luckily, we created the boolean gates above in such a way that this ended up being the case. Below we check this to make sure.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb63"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb63-1"><a href="#cb63-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Check that the last column contains the subset with all markers being '-'</span></span>
+<span id="cb63-2"><a href="#cb63-2" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(mat.stim)[<span class="fu">ncol</span>(mat.stim)]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "!CD107a&amp;!IFNg&amp;!IL2&amp;!TNFa"</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb65"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb65-1"><a href="#cb65-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Check that the number of columns for the two count matrices match</span></span>
+<span id="cb65-2"><a href="#cb65-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ncol</span>(mat.stim); <span class="fu">ncol</span>(mat.unstim); </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 16</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 16</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb68"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb68-1"><a href="#cb68-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Check that both counts matrices are actually matrices and that the metadata objec is a dataframe</span></span>
+<span id="cb68-2"><a href="#cb68-2" aria-hidden="true" tabindex="-1"></a><span class="fu">is.matrix</span>(mat.stim); <span class="fu">is.matrix</span>(mat.unstim); <span class="fu">is.data.frame</span>(metadata)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] TRUE</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] TRUE</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] TRUE</code></pre>
+</div>
+</div>
+</section>
+</section>
+<section id="fit-compass-model" class="level3">
+<h3 class="anchored" data-anchor-id="fit-compass-model">Fit COMPASS Model</h3>
+<p>Finally, we can fit the COMPASS model by passing our data objects to the SimpleCOMPASS() function. We also specify that the variable within the metadata object indicating individual samples is “unique_id”.</p>
+</section>
+<section id="compass-results" class="level3">
+<h3 class="anchored" data-anchor-id="compass-results">COMPASS Results</h3>
+<section id="heatmap" class="level4">
+<h4 class="anchored" data-anchor-id="heatmap">Heatmap</h4>
+<p>We can plot a heatmap of the mean probability of response in order to visualize differences in expression for each type of stimulation relative to the unstimulated sample.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb72"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb72-1"><a href="#cb72-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(compass.fit, <span class="st">"Group"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>The 'threshold' filter has removed 12 categories:
+CD107a&amp;IFNg&amp;IL2&amp;TNFa, CD107a&amp;IFNg&amp;IL2&amp;!TNFa, CD107a&amp;IFNg&amp;!IL2&amp;TNFa, CD107a&amp;IFNg&amp;!IL2&amp;!TNFa, CD107a&amp;!IFNg&amp;IL2&amp;TNFa, CD107a&amp;!IFNg&amp;IL2&amp;!TNFa, CD107a&amp;!IFNg&amp;!IL2&amp;TNFa, CD107a&amp;!IFNg&amp;!IL2&amp;!TNFa, !CD107a&amp;IFNg&amp;IL2&amp;!TNFa, !CD107a&amp;!IFNg&amp;IL2&amp;TNFa, !CD107a&amp;!IFNg&amp;IL2&amp;!TNFa, !CD107a&amp;!IFNg&amp;!IL2&amp;TNFa</code></pre>
+</div>
+<div class="cell-output-display">
+<p><img src="flowkit-compass-vignette_files/figure-html/unnamed-chunk-44-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</section>
+<section id="functional-and-polyfunctional-scores" class="level4">
+<h4 class="anchored" data-anchor-id="functional-and-polyfunctional-scores">Functional and PolyFunctional Scores</h4>
+<p>These are measures of the overall level of ‘functionality’ of a cell, which has shown to be correlated with a cell’s affinity in immune response.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb74"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb74-1"><a href="#cb74-1" aria-hidden="true" tabindex="-1"></a>FS <span class="ot">&lt;-</span> <span class="fu">FunctionalityScore</span>(compass.fit)</span>
+<span id="cb74-2"><a href="#cb74-2" aria-hidden="true" tabindex="-1"></a>PFS <span class="ot">&lt;-</span> <span class="fu">PolyfunctionalityScore</span>(compass.fit)</span>
+<span id="cb74-3"><a href="#cb74-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb74-4"><a href="#cb74-4" aria-hidden="true" tabindex="-1"></a>metadata<span class="sc">$</span>FS <span class="ot">&lt;-</span> FS</span>
+<span id="cb74-5"><a href="#cb74-5" aria-hidden="true" tabindex="-1"></a>metadata<span class="sc">$</span>PFS <span class="ot">&lt;-</span> PFS</span>
+<span id="cb74-6"><a href="#cb74-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb74-7"><a href="#cb74-7" aria-hidden="true" tabindex="-1"></a>metadata</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   unique_id Stimulation Group         FS       PFS
+2 DEN084Y5_2        stim   CMV 0.20006000 0.1334008
+3 DEN084Y5_3        stim   HIV 0.01503333 0.0056375</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb76"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb76-1"><a href="#cb76-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>R version 4.2.0 (2022-04-22)
+Platform: x86_64-pc-linux-gnu (64-bit)
+Running under: Ubuntu 20.04.4 LTS
+
+Matrix products: default
+BLAS:   /usr/lib/x86_64-linux-gnu/blas/libblas.so.3.9.0
+LAPACK: /usr/lib/x86_64-linux-gnu/lapack/liblapack.so.3.9.0
+
+locale:
+ [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C              
+ [3] LC_TIME=en_US.UTF-8        LC_COLLATE=en_US.UTF-8    
+ [5] LC_MONETARY=en_US.UTF-8    LC_MESSAGES=en_US.UTF-8   
+ [7] LC_PAPER=en_US.UTF-8       LC_NAME=C                 
+ [9] LC_ADDRESS=C               LC_TELEPHONE=C            
+[11] LC_MEASUREMENT=en_US.UTF-8 LC_IDENTIFICATION=C       
+
+attached base packages:
+[1] stats     graphics  grDevices utils     datasets  methods   base     
+
+other attached packages:
+ [1] readxl_1.4.0    forcats_0.5.1   stringr_1.4.0   dplyr_1.0.9    
+ [5] purrr_0.3.4     readr_2.1.2     tidyr_1.2.0     tibble_3.1.7   
+ [9] ggplot2_3.3.6   tidyverse_1.3.1 COMPASS_1.29.5  knitr_1.39     
+[13] reticulate_1.25
+
+loaded via a namespace (and not attached):
+ [1] Rcpp_1.0.8.3       lubridate_1.8.0    here_1.0.1         lattice_0.20-45   
+ [5] png_0.1-7          assertthat_0.2.1   rprojroot_2.0.3    digest_0.6.29     
+ [9] utf8_1.2.2         cellranger_1.1.0   R6_2.5.1           plyr_1.8.7        
+[13] backports_1.4.1    reprex_2.0.1       evaluate_0.15      httr_1.4.3        
+[17] pillar_1.7.0       rlang_1.0.2        rstudioapi_0.13    data.table_1.14.2 
+[21] Matrix_1.4-1       pdist_1.2.1        rmarkdown_2.14     htmlwidgets_1.5.4 
+[25] munsell_0.5.0      broom_0.8.0        compiler_4.2.0     modelr_0.1.8      
+[29] xfun_0.31          pkgconfig_2.0.3    htmltools_0.5.2    tidyselect_1.1.2  
+[33] fansi_1.0.3        withr_2.5.0        tzdb_0.3.0         crayon_1.5.1      
+[37] dbplyr_2.2.0       grid_4.2.0         jsonlite_1.8.0     gtable_0.3.0      
+[41] lifecycle_1.0.1    DBI_1.1.3          magrittr_2.0.3     scales_1.2.0      
+[45] cli_3.3.0          stringi_1.7.6      fs_1.5.2           xml2_1.3.3        
+[49] ellipsis_0.3.2     generics_0.1.2     vctrs_0.4.1        RColorBrewer_1.1-3
+[53] tools_4.2.0        glue_1.6.2         hms_1.1.1          abind_1.4-5       
+[57] fastmap_1.1.0      yaml_2.3.5         clue_0.3-61        colorspace_2.0-3  
+[61] cluster_2.1.3      rvest_1.0.2        haven_2.5.0       </code></pre>
 </div>
 </div>
 </section>

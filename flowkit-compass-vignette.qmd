@@ -1,29 +1,72 @@
 ---
 title: "FlowKit COMPASS Vignette"
 author: Tyler Schappe
-format: 
-  html:
-    toc: true
-    toc_float: true
-    df-print: paged
-jupyter: python3
+html:
+  toc: true
+  toc_float: true
+  df-print: paged
+engine: knitr
 ---
 
+## List of Things to Check
+
+1.  Custom gates for any samples?
+  - FlowKit 1.0 will have a way to check this automatically
+2.  Visualize gates to check shapes
+  - Rectangle vs quadrant
+  - Modify how to extract thresholds
+  - Min or Max, or both?
+3.  Compensation?
+4.  Transformations?
+
+
 ## Processing Raw Flow Cytometry Data Using FlowKit
+
+```{r setup, include = FALSE}
+library(reticulate); library(knitr)
+use_python("/usr/bin/python3")
+options(reticulate.repl.quiet = TRUE)
+
+knitr::knit_engines$set(python = reticulate::eng_python)
+knitr::opts_chunk$set(python.reticulate = TRUE)
+
+py_run_string('import os')
+py_run_string('import flowkit as fk')
+py_run_string('import numpy as np')
+py_run_string('import pandas as pd')
+py_run_string('import anndata as ad')
+py_run_string('import itertools')
+py_run_string('import bokeh')
+py_run_string('import copy')
+py_run_string('from bokeh.plotting import show')
+py_run_string('from bokeh.io import output_notebook')
+#py_run_string("output_notebook(resources=bokeh.resources.Resources(mode='cdn'), hide_banner=True)")
+```
+
 
 ### FlowKit Setup
 
 ```{python}
-import os
-import flowkit as fk
-import numpy as np
-import pandas as pd
-import anndata as ad
+# import os
+# import flowkit as fk
+# import numpy as np
+# import pandas as pd
+# import anndata as ad
+# import itertools
+# import bokeh
+# import copy
+# 
+# from bokeh.plotting import show
+# #Example of Bokeh in Quarto (http://dev.ipol.im/~qbammey/quarto.html#/alternative-bokeh)
+# from bokeh.io import output_notebook #Needed for Bokeh in Quarto
+# output_notebook(resources=bokeh.resources.Resources(mode='cdn'), hide_banner=True) #Needed for Bokeh in Quarto
+
 
 # Check version so users can verify they have the same version/API
 fk.__version__
 ```
 
+#### Set the Data File Paths
 
 ```{python}
 data_dir = "/opt/flowkit/examples/data/8_color_data_set"
@@ -31,7 +74,7 @@ sample_path = os.path.join(data_dir, "fcs_files")
 wsp_path = os.path.join(data_dir, "8_color_ICS.wsp")
 ```
 
-### Load Raw Flow Cytometry Data
+### Load Raw Flow Cytometry Data Files
 
 We create a FlowKit session using the FCS files. We also import a corresponding FlowJo workspace (.wsp) file that contains any compensations, transformations, and manual gating done in FlowJo.
 
@@ -61,18 +104,18 @@ sample_group = 'DEN'
 
 Channel transformations can be applied in FlowJo in a number of ways. Particularly, if different transformations have been applied to different channels, we want to be careful about comparing among channels.In general, we would like the following transformations:
 
-- For color gates, the same logicle transform applied to all
-- For forward- and side-scatter gates, the same linear transform applied to all
-- We don't really care about the time channel since we will be excluding it later. 
+-   For color gates, the same logicle transform applied to all
+-   For forward- and side-scatter gates, the same linear transform applied to all
+-   We don't really care about the time channel since we will be excluding it later.
 
 The results here include any transformations that were applied to any channel in FlowJo from the FCS in the workspace in that sample group.
 
 ```{python}
-session.get_group_transforms(group_name=sample_group)
+session.get_group_transforms(group_name = sample_group)
 ```
 
 The transforms here all look consistent across samples.
- 
+
 #### Get the Sample IDs for the Sample Group of Interest
 
 ```{python}
@@ -81,15 +124,23 @@ sample_list = session.get_group_sample_ids(sample_group)
 sample_list
 ```
 
-### Choose a Gate of Interest
+### Process the Samples
 
-####  Investigate the Gating Hierarchy
+```{python}
+session.analyze_samples(sample_group, verbose = False)
+```
+
+### Choose a Parent Gate
+
+We need to define a gate that is a direct parent of the gates we want to use to define the mutually exclusive cell subsets.
+
+#### Investigate the Gating Hierarchy
 
 ```{python}
 print(session.get_gate_hierarchy(sample_group))
 ```
 
-####  Examine All Gates for the Sample Group
+#### Examine All Gates for the Sample Group
 
 Note a gate ID is a combination of the gate name plus its gate path
 
@@ -97,59 +148,84 @@ Note a gate ID is a combination of the gate name plus its gate path
 session.get_gate_ids(group_name=sample_group)
 ```
 
-####  Define the Target Parent Gate
+#### Define the Target Parent Gate
+
+For simplicity, this vignette will use the CD4 gate as the parent and we will ignore the CD8 gate for now.
 
 ```{python}
-target_gate = 'CD4+'
-target_gate_path = ('root', 'Time', 'Singlets', 'aAmine-', 'CD3+')
+parent_gate_name = 'CD4+'
 ```
 
-###  Process the Samples
+#### Get the Parent Gate Path
+
+We can obtain child gate IDs and then extract the parent path from one of them (they're all the same)
 
 ```{python}
-session.analyze_samples(sample_group, verbose= False)
+gate_ids = session.get_child_gate_ids(sample_group, parent_gate_name)
+parent_gate_path = gate_ids[0][1]
+parent_gate_path
 ```
 
-### Choose a Sample
+### Visualize the Gates from FlowJo
+
+This step is very important to determine how to decide cutoff values to use for the threshold gates that we create below. We need to determine the intent of the manual gates. For example, if rectangle gates were used, for each dimension/marker, we need to decide whether the min, max, or both values were relevant in that they actually excluded some events, or whether they did not exclude any events and are simply an artifact of making a rectangle gate. A common scenario is where an analyst uses a rectangle gate to select a sub-population that have large values of a marker; while the rectangle gate forces a technical maximum value for that marker, the intent of the analyst may be to include any event with a value above some threshold, in which case the maximum value imposed by the rectangle gate is set arbitrarily high so as to no exclude any events above it. In such a case, the maximum value is not relevant and we can simply focus on the minimum value for the gate.
+
+#### Define a Single Sample in the Sample Group
+
+Because all samples within the sample group share the same gate hierarchy, we can just pick one sample. However, it's possible that samples have different gating cutoffs, so beware!
 
 ```{python}
 sample_id = '101_DEN084Y5_15_E05_010_clean.fcs'
 sample = session.get_sample(sample_id)
-
-channel_lut = dict(zip(sample.pnn_labels, sample.pns_labels))
 ```
 
-```{python}
-gate_ids = session.get_child_gate_ids(sample_group, target_gate)
+#### Get Child Gate Information
 
-# we'll grab the gate path off one of the above gate IDs
-# (they all have the same parent)
-cd4_gate_path = gate_ids[0][1]
-```
-
-```{python}
-gate_ids
-```
-
-
-Loop over each gate and look for matches
 ```{python}
 quadrant_gates = {}
 
 for (gate_name, gate_path) in gate_ids:
-    quadrant_gates[gate_name] = session.get_gate(sample_group, gate_name, gate_path)
+  quadrant_gates[gate_name] = session.get_gate(sample_group, gate_name, gate_path)
+
+quadrant_gates
+```
+
+#### Plot Child Gates
+
+```{python}
+for (gate_name, gate_path) in gate_ids:
+  fig = session.plot_gate(group_name = sample_group, 
+                          sample_id = sample_id, 
+                          gate_name = gate_name, 
+                          gate_path = gate_path,
+                          x_min = 0,
+                          x_max = 1.2,
+                          y_min = 0,
+                          y_max = 1.2
+  )
+  show(fig)
 
 ```
 
+#### Interpret Child Gates
+
+We can see from the plots and from the output of 'quadrant_gates' that each of the child gates is a rectangle gate. We also note that the likely intent of each of these gates was to select events with high values, and therefore their max values are irrelevant. We thus focus on their min values when defining the threshold gates below.
+
+### Create Single Threshold Gates
+
+#### Gather Details for Each Child Gate
+
+We loop over the quadrant gates and extract labels, min, max, compensation, and transformations
+
 ```{python}
+# A channel label lookup table to switch back and forth between PnN & PnS labels
+channel_lut = dict(zip(sample.pnn_labels, sample.pns_labels))
+
 gate_dims = []
 
 for gate_name, gate in quadrant_gates.items():
-    for dim in gate.dimensions:
-
-        #  need the PnN names for creating dimensions &
-        # collect metadata for each dimension
-        gate_dim_dict = {
+  for dim in gate.dimensions:
+    gate_dim_dict = {
             'gate_name': gate_name,
             'pnn_label': dim.id,
             'pns_label': channel_lut[dim.id],
@@ -157,81 +233,472 @@ for gate_name, gate in quadrant_gates.items():
             'max': dim.max,
             'comp_ref': dim.compensation_ref,
             'xform_ref': dim.transformation_ref
-        }
-
-        gate_dims.append(gate_dim_dict)
-
+    }
+  gate_dims.append(gate_dim_dict)
+    
+#Collect list of dictionaries into a Pandas dataframe
 df_gate_dims = pd.DataFrame(gate_dims)
+
+df_gate_dims
 ```
 
+#### Check For Identical Compensations Among Gates
+
+We verify that a single compensation was used across all gates.
+
 ```{python}
- # verify there's only one compensation referenced
 comp_refs = df_gate_dims['comp_ref'].unique()
 if len(comp_refs) > 1:
-    raise ValueError("More than one compensation ref found!")
+  raise ValueError("More than one compensation ref found!")
 
 comp_ref = comp_refs[0]
 ```
 
+#### Create Threshold Gates
+
+This step consists of essentially 2 parts:
+
+1.  If multiple threshold values were defined for a single child channel in FlowJo, find the mean among the min and max values
+
+-   Multiple threshold values can be defined when, for example, an analyst creates gates from scatter plots with the same channel multiple times
+
+2.  For each child channel, create 2 new threshold gates:
+3.  Positive
+4.  Negative
+
+**Note:** We determined above that the max values for the child rectangle gates are irrelevant, so we create our threshold gates based on the min values.
+
 ```{python}
-# Now calculate the mean from each quadrant dimension
-# and make a pair of single dimension gates per channel (pos and neg)
+# Define unique channel labels
 range_pnn_labels = df_gate_dims.pnn_label.unique()
 
-# this will hold the list of gate pairs (neg & pos) for each channel
+# This will hold the list of gate pairs (neg & pos) for each channel
 gate_pairs = []
 
 for label in range_pnn_labels:
-    # get rows for this label
-    df_label = df_gate_dims[df_gate_dims.pnn_label == label]
+  # Get rows for this channel from df_gate_dims
+  df_label = df_gate_dims[df_gate_dims.pnn_label == label]
+  
+  # This will hold threshold values
+  all_values = []
+  # Extract just the min values (exclude missing)
+  all_values.extend(df_label[df_label['min'].notna()]['min'])
+  #all_values.extend(df_label[df_label['max'].notna()]['max'])
+  
+  # Calculate the mean among the min threshold values for this channel
+  mean_value = np.mean(all_values)
+  
+  # Extract a channel/marker label from the pnn_label
+  # pns_label = channel_lut[label] #If we had pns_labels, we would use the lookup table
+  pns_label = copy.copy(label) #The pns_label is the pnn_label, so just copy the 'label' loop variable
+  marker_label = pns_label.split()[0] #Split the label by spaces and extract the first element
+  
+  # Create labels for negative and positive gates
+  gate_label_neg = parent_gate_name + '_' + marker_label + '-'
+  gate_label_pos = parent_gate_name + '_' + marker_label + '+'
+  # Collect the labels in gate_pairs
+  gate_pairs.append([gate_label_pos, gate_label_neg])
+  
+  # Define the dimensions
+  # Negative will be a range gate where max is specified but not min
+  # Positive will be a range gate where min is specified but not max
+  # By convention the xform ref in FlowJo is tied to the channel PnN name
+  dim_neg = fk.Dimension(
+      label,
+      compensation_ref=comp_ref,
+      transformation_ref=label,
+      range_min=None,
+      range_max=mean_value
+  )
+  dim_pos = fk.Dimension(
+      label,
+      compensation_ref=comp_ref,
+      transformation_ref=label,
+      range_min=mean_value,
+      range_max=None
+  )
+  
+  # Create the threshold gates using the dimensions defined above
+  gate_neg = fk.gates.RectangleGate(
+      gate_label_neg,
+      parent_gate_name,
+      dimensions=[dim_neg]
+  )
+  gate_pos = fk.gates.RectangleGate(
+      gate_label_pos,
+      parent_gate_name,
+      dimensions=[dim_pos]
+  )
+  
+  # Add the gates to the session
+  session.add_gate(gate_neg, group_name=sample_group)
+  session.add_gate(gate_pos, group_name=sample_group)
 
-    # collect all values (both min AND max)
-    all_values = []
-    all_values.extend(df_label[df_label['min'].notna()]['min'])
-    all_values.extend(df_label[df_label['max'].notna()]['max'])
+```
 
-    mean_value = np.mean(all_values)
+### Create Boolean Gates
 
-    # gate name will be the first part of the PnS name
-    # i.e. the marker w/o the fluoro
-    pns_label = channel_lut[label]
-    marker_label = pns_label.split()[0]
+#### Generate Index Permutations
 
-    # will have 2 gates per dimension (pos and neg):
-    # negative will be a range gate where max is specified but not min
-    # positive will be a range gate where min is specified but not max
-    gate_label_neg = marker_label + '-'
-    gate_label_pos = marker_label + '+'
-    gate_pairs.append([gate_label_pos, gate_label_neg])
+Derive all possible permutations with repetition with 2 possible values (+ and -) for the number of child gates. This defines the number of mutually exclusive cell subsets using all possible combinations of these child gates.
 
-    # by convention the xform ref in FlowJo is tied to the channel PnN name
-    dim_neg = fk.Dimension(
-        label,
-        compensation_ref=comp_ref,
-        transformation_ref=label,
-        range_min=None,
-        range_max=mean_value
-    )
-    dim_pos = fk.Dimension(
-        label,
-        compensation_ref=comp_ref,
-        transformation_ref=label,
-        range_min=mean_value,
-        range_max=None
-    )
+In this example, since we have 4 child gates, there are $2^4 = 16$ possible mutually-exclusive cell subsets.
 
-    gate_neg = fk.gates.RectangleGate(
-        gate_label_neg,
-        cd4_gate_name,
-        dimensions=[dim_neg]
-    )
-    gate_pos = fk.gates.RectangleGate(
-        gate_label_pos,
-        cd4_gate_name,
-        dimensions=[dim_pos]
-    )
+```{python}
+# Find the number of unique channels
+n_channels = len(gate_pairs)
+# Derive the permutations using 0 and 1 for + and -
+idx_combos = itertools.product([0, 1], repeat=n_channels)
 
-    session.add_gate(gate_neg, group_name=sample_group)
-    session.add_gate(gate_pos, group_name=sample_group)
+print(list(gate_pairs))
+```
+
+#### Convert Index Permutations to Threshold Gate Permutations
+
+```{python}
+# This will hold the set of gate names for each one of our divisions
+bool_gate_name_combos = []
+
+# Loop over each permutation
+for ic in idx_combos:
+  
+  # Enumerate over the permutation and extract the corresponding threshold gate
+  bool_gate_name_combos.append(
+    # i indexes the threshold gates in gate_pairs
+    # idx indexes + or - versions of each threshold gate
+    [gate_pairs[i][idx] for i, idx in enumerate(ic)]
+  )
+```
+
+#### Create the Boolean Gates
+
+```{python}
+# This will hold the boolean gate unique IDs
+bool_gate_ids = []
+
+for gate_name_combos in bool_gate_name_combos:
+  # Collapse the gate permutations into a single comma-sep gate ID
+  bool_gate_id = ",".join(gate_name_combos)
+  # Append the gate IDs
+  bool_gate_ids.append(bool_gate_id)
+    
+  # This will hold the boolean gate references (name, path, complement)
+  gate_refs = []
+  
+  # For each boolean gate, define the reference
+  for gate_name in gate_name_combos:
+    gate_ref = {
+      'ref': gate_name,
+      'path': parent_gate_path,
+      'complement': False
+    }
+    # Append the gate references
+    gate_refs.append(gate_ref)
+        
+  # Define the boolean gate
+  # Note that we define the parent of the boolean gates as the parent of their component gates, but this is not strictly necessary
+  bool_gate = fk.gates.BooleanGate(
+      bool_gate_id, #Assign a unique gate name
+      parent_gate_name, #Assigning the parent for this boolean gate
+      'and', #Apply 'and' operation to all gate_refs
+      gate_refs #The reference
+  )
+   
+  # Add the boolean gate to the session 
+  session.add_gate(bool_gate, group_name = sample_group)
+
+```
+
+#### Visualize the New Boolean Gates in the Gating Hierarchy
+
+```{python}
+print(session.get_gate_hierarchy(sample_group))
+```
+
+We can now see that we have added two sets of gates to our gating hierarchy:
+
+1.  
+
+    -   and - threshold gates for each child channel
+
+-   Recall that we used the mean cutoff value from the rectangle gates imported from FlowJo
+
+2.  Boolean gates for all possible permutations of the child gates
+
+-   These define mutually-exclusive subsets within CD4+ events
+
+Note that while we chose a single sample from the sample group to derive these boolean gates, because all samples in a group have identical gating hierarchy, they will be valid for all samples.
+
+### Calculate Counts for Each Cell Subset
+
+#### Re-Analyze Samples
+
+We need to re-analyze because we added new gates
+
+```{python}
+session.analyze_samples(sample_group, verbose = False)
+```
+
+#### Generate Sample Group Report
+
+```{python}
+group_report = session.get_group_report(sample_group)
+```
+
+Display the report for just the boolean gates
+
+#### Show Report for Each Sample in Sample Group
+
+**Notes:**
+
+- The 'relative_percent' column gives the percentage of events in a category relative to the total number of events in the parent gate (in this case CD4+)
+- The 'absolute_percent' column gives the percentage of events in a category relative to the total number of events in the entire dataset.
+
+First, define a function to show a slice of the full report for the sample of interest. 
+```{python}
+def sample_report(sample_name):
+  sample_report = group_report.loc[(group_report['gate_type'] == 'BooleanGate') & (group_report['parent'] == parent_gate_name) & (group_report['sample'] == sample_name),
+                   ('gate_name', 'count', 'relative_percent', 'absolute_percent')]
+  return(sample_report)
+
+```
+
+```{python}
+#| echo: false
+cur_sample = sample_list[0]
+from IPython.display import display, Markdown
+display(Markdown("""
+##### Report for {cur_sample}.
+""".format(cur_sample = cur_sample)))
+```
+
+
+```{python}
+sample_report(sample_list[0])
+```
+
+```{python}
+#| echo: false
+cur_sample = sample_list[1]
+from IPython.display import display, Markdown
+display(Markdown("""
+##### Report for {cur_sample}.
+""".format(cur_sample = cur_sample)))
+```
+
+```{python}
+sample_report(sample_list[1])
+```
+
+```{python}
+#| echo: false
+cur_sample = sample_list[2]
+from IPython.display import display, Markdown
+display(Markdown("""
+##### Report for {cur_sample}.
+""".format(cur_sample = cur_sample)))
+```
+
+```{python}
+sample_report(sample_list[2])
+```
+
+#### Extract Counts for Samples of Interest
+
+COMPASS needs input samples to be paired observations of the same biological sample under two different experimental conditions (ie. stimulated vs unstimulated). For this dataset, the sample name with 'E01' is unstimulated and the sample name with 'E03' is stimulated with cytomegalovirus (CMV). We will save the reports with cell proportions for just those two samples. 
+
+```{python}
+counts_CMV = sample_report(sample_list[0])
+counts_HIV = sample_report(sample_list[1])
+counts_unstim = sample_report(sample_list[2])
+```
+
+### Extract Events for Each Population
+
+**Note:** We may not need this data according to Lynn in a meeting, but the [COMPASS vignette](https://www.bioconductor.org/packages/devel/bioc/vignettes/COMPASS/inst/doc/COMPASS.html) shows that we do.
+
+```{python}
+# for group_report:
+# session.get_wsp_gated_events(group_name = sample_group,
+#                              sample_ids = sample_list,
+#                              gate_name = ,
+#                              gate_path =
+#                             )
+```
+
+
+
+## Running COMPASS
+
+### Brief Background of COMPASS
+
+COMPASS is a tool that uses mixture models.
+
+Provides two summary outputs for each subject/individual:
+
+1. The functionality score (FS): Defined as the proportion of antigen-specific subsets detected among all possible ones
+2. The polyfunctionality score (PFS) is similar, but it weighs the different subsets by their degree of functionality, naturally favoring subsets with higher degrees of functionality, motivated by the observations that a higher-degree function has been correlated with good outcomes in certain vaccine studies
+
+```{r}
+library(reticulate); library(COMPASS); library(tidyverse); library(readxl)
+```
+
+### Data Setup
+
+#### Transfer Count Data from Python
+
+We can transfer the counts objects from the Python environment to the R environment easily using the syntax 'py$'
+
+```{r}
+counts.unstim <- py$counts_unstim
+counts.CMV <- py$counts_CMV
+counts.HIV <- py$counts_HIV
+```
+
+#### Create Data Matrices
+
+We create a matrix for CMV- and HIV-stimulated samples, and for the unstimulated sample by transposing the counts vectors. 
+
+```{r}
+mat.unstim <- as.matrix(
+  t(counts.unstim$count)
+)
+
+mat.CMV <- as.matrix(
+  t(counts.CMV$count)
+)
+
+mat.HIV <- as.matrix(
+  t(counts.HIV$count)
+)
+```
+
+Next, we assign the unique gate names to the columns of each matrix. We remove the 'CD4+_' prefix and any commas in accordance with the requirements of COMPASS. 
+
+```{r}
+colnames(mat.unstim) <- gsub(',', '', gsub('CD4\\+_', '', counts.unstim$gate_name))
+colnames(mat.CMV) <- gsub(',', '', gsub('CD4\\+_', '', counts.CMV$gate_name))
+colnames(mat.HIV) <- gsub(',', '', gsub('CD4\\+_', '', counts.HIV$gate_name))
+```
+
+#### Create Metadata
+
+The metadata should include unique sample IDs and any other relevant information.
+
+**Note:** Our dataset is somewhat unconventional in that we have two stimulation conditions and an unstimulated control for our single sample. In addition, COMPASS requires at least 2 comparisons of stimulated vs control. Therefore, for the purposes of this vignette, we will consider the CMV-stimulated and the HIV-stimulated replicates as two samples even though they originate from the same biological sample. 
+
+We first need to prepare the sample IDs using the raw FCS file names from the Python object 'sample_list'. We parse these file names using '_' and extract the relevant terms for these samples. We then append a count to each of these to make them unique. 
+
+```{r}
+sample.ids <- as.data.frame(py$sample_list) %>%
+  tidyr::separate(sep = "_", col = "py$sample_list", into = c(NA, "sample", NA, NA, NA, NA)) %>%
+  deframe() %>%
+  paste(c("1", "2", "3"), sep = "_")
+```
+
+Now we can make the metadata object with the unique sample IDs, an indicator variable for stimulated vs unstimulated, and a variable indicating the type of stimulation.
+
+```{r}
+metadata <- data.frame(
+  unique_id = sample.ids,
+  Stimulation = c("unstim", "stim", "stim"),
+  Group = c("unstim", "CMV", "HIV")
+)
+```
+
+#### Combine CMV and HIV
+
+As noted above, we treat the CMV-stimulated and HIV-stimulated replicates for this single sample as two samples for this analysis. In order to do so, we need to combine the CMV and HIV count matrices row-wise into a single matrix. We also create an unstimulated matrix by repeating the single vector of unstimulated counts twice row-wise into a matrix. While unconventional, this will provide CMV-stimulated vs unstimulated and HIV-stimulated vs unstimulated comparisons. 
+
+```{r}
+mat.stim <- rbind(mat.CMV, mat.HIV)
+mat.unstim <- rbind(mat.unstim[1,], mat.unstim[1,])
+```
+
+#### Assign Rownames
+
+The rownames of both count matrices need to match the "unique_id" column of the metadata dataframe, so we assign them accordingly.
+
+```{r}
+rownames(mat.stim) <- metadata$unique_id[metadata$Group %in% c("CMV", "HIV")]
+rownames(mat.unstim) <- metadata$unique_id[metadata$Group %in% c("CMV", "HIV")]
+```
+
+#### Subset Metadata
+
+The number of rows in the metadata object need to match the number of rows in each count matrix. We therefore subset to include only the stimulated samples.
+
+```{r}
+metadata <- metadata[metadata$Group %in% c("CMV", "HIV") ,]
+```
+
+#### Reformat Cell Subset Names
+
+Above we assigned the column names of each data matrix as the unique gating hierarchy/combination for each cell subset where a '+' indicates the marker is expressed and '-' indicates that it is not. COMPASS requires these strings to be in a specific format, and contains a function to parse an existing string into the proper format that it expects. Notably, '-' is converted into the 'not' operator !. 
+
+```{r}
+colnames(mat.stim) <- COMPASS:::translate_marker_names(colnames(mat.stim))
+colnames(mat.unstim) <- COMPASS:::translate_marker_names(colnames(mat.unstim))
+
+colnames(mat.stim)
+```
+
+#### Checks
+
+**Important:** COMPASS requires that the final column of each count matrix is the cell subset in which all markers are '-'. Luckily, we created the boolean gates above in such a way that this ended up being the case. Below we check this to make sure. 
+
+```{r checks}
+# Check that the last column contains the subset with all markers being '-'
+colnames(mat.stim)[ncol(mat.stim)]
+
+# Check that the number of columns for the two count matrices match
+ncol(mat.stim); ncol(mat.unstim); 
+
+# Check that both counts matrices are actually matrices and that the metadata objec is a dataframe
+is.matrix(mat.stim); is.matrix(mat.unstim); is.data.frame(metadata)
+```
+
+### Fit COMPASS Model
+
+Finally, we can fit the COMPASS model by passing our data objects to the SimpleCOMPASS() function. We also specify that the variable within the metadata object indicating individual samples is "unique_id". 
+
+```{r COMPASS, include = FALSE}
+compass.fit = COMPASS::SimpleCOMPASS(n_s = mat.stim,
+                                     n_u = mat.unstim,
+                                     meta = metadata,
+                                     individual_id = "unique_id",
+                                     iterations = 10000,
+                                     replications = 8,
+                                     verbose = FALSE
+)
+```
+
+### COMPASS Results
+
+#### Heatmap
+
+We can plot a heatmap of the mean probability of response in order to visualize differences in expression for each type of stimulation relative to the unstimulated sample.
+
+```{r}
+plot(compass.fit, "Group")
+```
+
+#### Functional and PolyFunctional Scores
+
+These are measures of the overall level of 'functionality' of a cell, which has shown to be correlated with a cell's affinity in immune response. 
+
+```{r}
+FS <- FunctionalityScore(compass.fit)
+PFS <- PolyfunctionalityScore(compass.fit)
+
+metadata$FS <- FS
+metadata$PFS <- PFS
+
+metadata
+```
+
+
+```{r}
+sessionInfo()
 ```
 
