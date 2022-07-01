@@ -9,6 +9,9 @@ format:
     df-print: paged
 engine: jupyter
 jupyter: python3
+project:
+  type: website
+  output-dir: docs
 ---
 
 ## Objectives
