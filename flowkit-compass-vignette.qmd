@@ -1,4 +1,8 @@
 ---
+project:
+  type: website
+  output-dir: docs
+
 title: "Analyzing Flow Cytometry Data with FlowKit and COMPASS"
 author: Tyler Schappe & Scott White
 date: 7/1/2022
@@ -9,9 +13,6 @@ format:
     df-print: paged
 engine: jupyter
 jupyter: python3
-project:
-  type: website
-  output-dir: docs
 ---
 
 ## Objectives
